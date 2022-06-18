@@ -53,7 +53,7 @@
 static_assert(
 	std::is_integral_v<std::time_t> && sizeof(std::time_t) == sizeof(std::size_t),
 	"wrap std::time_t instead");
-
+#include <fmt/format.h>
 #pragma warning(push)
 #include <boost/stl_interfaces/iterator_interface.hpp>
 #include <spdlog/spdlog.h>
