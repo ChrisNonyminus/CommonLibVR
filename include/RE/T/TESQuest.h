@@ -18,6 +18,7 @@ namespace RE
 {
 	class BGSBaseAlias;
 	class QueuedPromoteQuestTask;
+	class TESQuestStageItem;
 
 	enum class QuestFlag
 	{
@@ -134,9 +135,11 @@ namespace RE
 		explicit operator bool() const;
 
 		// members
-		QUEST_STAGE_DATA data;  // 0
+		QUEST_STAGE_DATA data;				// 0
+		TESQuestStageItem* questStageItem;	// 08
+	    std::uint64_t pad10;				// 10
 	};
-	static_assert(sizeof(TESQuestStage) == 0x8);
+	static_assert(sizeof(TESQuestStage) == 0x18);
 
 	class TESQuestTarget  // QSTA
 	{
@@ -260,8 +263,8 @@ namespace RE
 		QUEST_DATA                                           data;                                     // 0D8 - DNAM
 		QuestEvent                                           eventID;                                  // 0E0 - ENAM
 		std::uint32_t                                        pad0E4;                                   // 0E4
-		BSSimpleList<TESQuestStage>*                         executedStages;                           // 0E8
-		BSSimpleList<TESQuestStage*>*                        waitingStages;                            // 0F0
+		TESQuestStage*										 initialStage;							   // 0E8
+		BSSimpleList<TESQuestStage*>*                        otherStages;                              // 0F0
 		BSSimpleList<BGSQuestObjective*>                     objectives;                               // 0F8
 		TESCondition                                         objConditions;                            // 108
 		TESCondition                                         storyManagerConditions;                   // 110
