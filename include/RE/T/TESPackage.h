@@ -28,7 +28,20 @@ namespace RE
 		kAMMO = 12,
 		kKEYM = 13,
 		kALCH = 14,
-		kFOOD = 15
+		kFOOD = 15,
+		kCombatWearable = 16,
+	    kWearable = 17,
+	    kNONEWeapons = 18,
+	    kMeleeWeapons = 19,
+	    kRangedWeapons = 20,
+	    kSPEL = 21,
+	    kTargetSpells = 22,
+	    kTouchSpells = 23,
+	    kSelfSpells  = 24,
+	    kNPC_ = 25,
+	    kBeds = 26,
+	    kChairs = 27,
+	    kSHOU = 28
 	};
 
 	enum class PACKAGE_PROCEDURE_TYPE
@@ -151,6 +164,18 @@ namespace RE
 	class PackageTarget
 	{
 	public:
+		enum class Type
+		{
+			kNone = static_cast<std::underlying_type_t<Type>>(-1),
+			kNearReference = 0,
+			kObjectID = 1,
+			kObjectType = 2,
+			kNearLinkedReference = 3,
+			kAlias_Reference = 4,
+			kInterruptData = 5,
+			kNearSelf = 6,
+		};
+
 		union Target
 		{
 			inline Target() :
@@ -170,12 +195,12 @@ namespace RE
 		static_assert(sizeof(Target) == 0x8);
 
 		// members
-		std::int8_t   targType;  // 00
-		std::uint8_t  pad01;     // 01
-		std::uint16_t pad02;     // 02
-		Target        target;    // 08
-		std::int32_t  value;     // 10
-		std::uint32_t pad14;     // 14
+		stl::enumeration<Type, std::uint8_t> targType;	// 00
+		std::uint8_t  pad01;							// 01
+		std::uint16_t pad02;							// 02
+		Target        target;							// 08
+		std::int32_t  value;							// 10
+		std::uint32_t pad14;							// 14
 	};
 	static_assert(sizeof(PackageTarget) == 0x18);
 
