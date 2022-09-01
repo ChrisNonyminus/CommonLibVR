@@ -18,7 +18,7 @@ namespace RE
 {
 	class BGSBaseAlias;
 	class QueuedPromoteQuestTask;
-	class TESQuestStageItem;
+	struct TESQuestStageItem;
 
 	enum class QuestFlag
 	{
