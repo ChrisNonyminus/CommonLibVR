@@ -151,14 +151,23 @@ namespace RE
 		};
 
 		// members
-		std::uint64_t unk00;       // 00
+		std::uint64_t unk00;       // 00 Next?
 		TESCondition  conditions;  // 08
 		std::uint8_t  alias;       // 10
 		std::uint8_t  unk11;       // 11
 		std::uint16_t unk12;       // 12
 		std::uint32_t unk14;       // 14
+		std::uint64_t unk18;       // 18 ptr
+		std::uint64_t unk20;       // 20
+		std::uint64_t unk28;       // 28
+		std::uint64_t unk30;       // 30
+		std::uint64_t unk38;       // 38
+		std::uint64_t unk40;       // 40
+		std::uint64_t unk48;       // 48
+		std::uint64_t unk50;       // 50
+		std::uint64_t unk58;       // 58
 	};
-	static_assert(sizeof(TESQuestTarget) == 0x18);
+	static_assert(sizeof(TESQuestTarget) == 0x60);
 
 	class BGSQuestObjective
 	{
