@@ -10,6 +10,7 @@ namespace RE
 	{
 	public:
 		inline static constexpr auto RTTI = RTTI_BGSKeyword;
+		inline static constexpr auto VTABLE = VTABLE_BGSKeyword;
 		inline static constexpr auto FORMTYPE = FormType::Keyword;
 
 		struct RecordFlags
@@ -27,6 +28,8 @@ namespace RE
 		bool        Load(TESFile* a_mod) override;                // 06
 		const char* GetFormEditorID() const override;             // 32 - { return formEditorID.c_str(); }
 		bool        SetFormEditorID(const char* a_str) override;  // 33 - { formEditorID = a_str; }
+
+		static BGSKeyword* CreateKeyword(const BSFixedString& a_formEditorID);
 
 		// members
 		BSFixedString formEditorID;  // 20

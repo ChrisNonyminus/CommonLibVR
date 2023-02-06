@@ -6,6 +6,7 @@
 #include "RE/B/BSTHashMap.h"
 #include "RE/B/BaseFormComponent.h"
 #include "RE/F/FormTypes.h"
+#include "RE/T/TESFile.h"
 
 namespace RE
 {
@@ -179,11 +180,7 @@ namespace RE
 		static void AddCompileIndex(FormID& a_id, TESFile* a_file)
 		{
 			using func_t = decltype(&TESForm::AddCompileIndex);
-#ifndef SKYRIMVR
-			REL::Relocation<func_t> func{ REL::ID(14509) };
-#else
-			REL::Relocation<func_t> func{ 0x1a5510 };
-#endif
+			REL::Relocation<func_t> func{ RELOCATION_ID(14509, 14667) };
 			return func(a_id, a_file);
 		}
 
@@ -192,13 +189,8 @@ namespace RE
 				BSTHashMap<FormID, TESForm*>*,
 				std::reference_wrapper<BSReadWriteLock>>
 		{
-#ifndef SKYRIMVR
-			REL::Relocation<BSTHashMap<FormID, TESForm*>**> allForms{ REL::ID(514351) };
-			REL::Relocation<BSReadWriteLock*>               allFormsMapLock{ REL::ID(514360) };
-#else
-			REL::Relocation<BSTHashMap<FormID, TESForm*>**> allForms{ 0x1f88b18 };
-			REL::Relocation<BSReadWriteLock*>               allFormsMapLock{ 0x1f88fb0 };
-#endif
+			REL::Relocation<BSTHashMap<FormID, TESForm*>**> allForms{ RELOCATION_ID(514351, 400507) };
+			REL::Relocation<BSReadWriteLock*>               allFormsMapLock{ RELOCATION_ID(514360, 400517) };
 			return { *allForms, std::ref(*allFormsMapLock) };
 		}
 
@@ -207,13 +199,8 @@ namespace RE
 				BSTHashMap<BSFixedString, TESForm*>*,
 				std::reference_wrapper<BSReadWriteLock>>
 		{
-#ifndef SKYRIMVR
-			REL::Relocation<BSTHashMap<BSFixedString, TESForm*>**> allFormsByEditorID{ REL::ID(514352) };
-			REL::Relocation<BSReadWriteLock*>                      allFormsEditorIDMapLock{ REL::ID(514361) };
-#else
-			REL::Relocation<BSTHashMap<BSFixedString, TESForm*>**> allFormsByEditorID{ 0x1f88b20 };
-			REL::Relocation<BSReadWriteLock*>                      allFormsEditorIDMapLock{ 0x1f88fb8 };
-#endif
+			REL::Relocation<BSTHashMap<BSFixedString, TESForm*>**> allFormsByEditorID{ RELOCATION_ID(514352, 400509) };
+			REL::Relocation<BSReadWriteLock*>                      allFormsEditorIDMapLock{ RELOCATION_ID(514361, 400518) };
 			return { *allFormsByEditorID, std::ref(*allFormsEditorIDMapLock) };
 		}
 
@@ -298,11 +285,24 @@ namespace RE
 		[[nodiscard]] FormID        GetFormID() const noexcept { return formID; }
 		[[nodiscard]] FormType      GetFormType() const noexcept { return *formType; }
 		[[nodiscard]] std::int32_t  GetGoldValue() const;
-		[[nodiscard]] const char*   GetName() const;
-		[[nodiscard]] float         GetWeight() const;
-		[[nodiscard]] bool          HasVMAD() const;
-		[[nodiscard]] bool          HasWorldModel() const noexcept;
-		void                        InitItem() { InitItemImpl(); }
+
+		[[nodiscard]] FormID GetLocalFormID()
+		{
+			auto file = GetFile(0);
+
+			RE::FormID fileIndex = file->compileIndex << (3 * 8);
+			fileIndex += file->smallFileCompileIndex << ((1 * 8) + 4);
+
+			return formID & ~fileIndex;
+		}
+
+		[[nodiscard]] const char* GetName() const;
+		[[nodiscard]] float       GetWeight() const;
+		[[nodiscard]] bool        HasKeywordInArray(const std::vector<BGSKeyword*>& a_keywords, bool a_matchAll) const;
+		[[nodiscard]] bool        HasKeywordInList(BGSListForm* a_keywordList, bool a_matchAll) const;
+		[[nodiscard]] bool        HasVMAD() const;
+		[[nodiscard]] bool        HasWorldModel() const noexcept;
+		void                      InitItem() { InitItemImpl(); }
 
 		[[nodiscard]] bool Is(FormType a_type) const noexcept { return GetFormType() == a_type; }
 
@@ -320,6 +320,7 @@ namespace RE
 		[[nodiscard]] bool IsDynamicForm() const noexcept { return GetFormID() >= 0xFF000000; }
 		[[nodiscard]] bool IsGold() const noexcept { return GetFormID() == 0x0000000F; }
 		[[nodiscard]] bool IsIgnored() const noexcept { return (GetFormFlags() & RecordFlags::kIgnored) != 0; }
+		[[nodiscard]] bool IsInventoryObject() const;
 		[[nodiscard]] bool IsInitialized() const noexcept { return (GetFormFlags() & RecordFlags::kInitialized) != 0; }
 		[[nodiscard]] bool IsKey() const noexcept { return Is(FormType::KeyMaster); }
 		[[nodiscard]] bool IsLockpick() const noexcept { return GetFormID() == 0x0000000A; }

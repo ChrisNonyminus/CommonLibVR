@@ -25,7 +25,7 @@ namespace RE
 		UI_MESSAGE_RESULTS ProcessMessage(UIMessage& a_message) override;    // 04
 		void               PostDisplay() override;                           // 06
 
-		[[nodiscard]] RefHandle GetTargetRefHandle();
+		[[nodiscard]] static RefHandle GetTargetRefHandle();
 
 		// members
 		GFxValue        root;             // 30 - "Menu_mc"
@@ -38,5 +38,9 @@ namespace RE
 		std::uint16_t   pad7A;            // 7A
 		std::uint32_t   pad7C;            // 7C
 	};
+#ifndef SKYRIMVR
 	static_assert(sizeof(GiftMenu) == 0x80);
+#else
+	static_assert(sizeof(GiftMenu) == 0x90);
+#endif
 }

@@ -70,6 +70,22 @@ namespace RE
 		return *this;
 	}
 
+	NiPoint3& NiPoint3::operator*=(const NiPoint3& a_rhs)
+	{
+		x *= a_rhs.x;
+		y *= a_rhs.y;
+		z *= a_rhs.z;
+		return *this;
+	}
+
+	NiPoint3& NiPoint3::operator/=(const NiPoint3& a_rhs)
+	{
+		x /= a_rhs.x;
+		y /= a_rhs.y;
+		z /= a_rhs.z;
+		return *this;
+	}
+
 	NiPoint3& NiPoint3::operator*=(float a_scalar)
 	{
 		x *= a_scalar;
@@ -89,6 +105,11 @@ namespace RE
 			y * a_pt.z - z * a_pt.y,
 			z * a_pt.x - x * a_pt.z,
 			x * a_pt.y - y * a_pt.x);
+	}
+
+	float NiPoint3::Dot(const NiPoint3& a_pt) const
+	{
+		return x * a_pt.x + y * a_pt.y + z * a_pt.z;
 	}
 
 	float NiPoint3::GetDistance(const NiPoint3& a_pt) const noexcept
@@ -124,7 +145,9 @@ namespace RE
 	float NiPoint3::Unitize()
 	{
 		auto length = Length();
-		if (!std::isnan(length)) {
+		if (length == 1.f) {
+			return length;
+		} else if (length > FLT_EPSILON) {
 			operator/=(length);
 		} else {
 			x = 0.0;

@@ -24,6 +24,7 @@ namespace RE
 	{
 	public:
 		inline static constexpr auto RTTI = RTTI_IngredientItem;
+		inline static constexpr auto VTABLE = VTABLE_IngredientItem;
 		inline static constexpr auto FORMTYPE = FormType::Ingredient;
 
 		enum class IngredientFlag
@@ -98,6 +99,11 @@ namespace RE
 		// override (BGSKeywordForm)
 		[[nodiscard]] BGSKeyword* GetDefaultKeyword() const override;  // 05
 
+		[[nodiscard]] bool           IsHostile() const;
+		bool                         LearnEffect(std::uint32_t a_index);
+		bool                         LearnEffect(EffectSetting* a_effect);
+		std::optional<std::uint32_t> LearnNextEffect();
+		void                         LearnAllEffects();
 		// members
 		Data          data;      // 130 - ENIT
 		GameData      gamedata;  // 138

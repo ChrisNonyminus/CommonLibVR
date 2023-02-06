@@ -32,14 +32,25 @@ namespace RE
 		bool          IsEqual(NiObject* a_object) override;               // 1C
 		void          Unk_25(void) override;                              // 25
 
+		void UpdateDismemberPartion(std::uint16_t a_slot, bool a_enable)
+		{
+			using func_t = decltype(&BSDismemberSkinInstance::UpdateDismemberPartion);
+			REL::Relocation<func_t> func{ RELOCATION_ID(15576, 15753) };
+			return func(this, a_slot, a_enable);
+		}
+
 		// members
-		std::int32_t  numPartitions;  // 88
-		std::uint32_t pad8C;          // 8C
-		Data*         partitions;     // 90
-		bool          unk98;          // 98
-		std::uint8_t  pad99;          // 99
-		std::uint16_t pad9A;          // 9A
-		std::uint32_t pad9C;          // 9C
+		std::int32_t  numPartitions;  // 88 VR 68
+		std::uint32_t pad8C;          // 8C VR 6C
+		Data*         partitions;     // 90 VR 70
+		bool          unk98;          // 98 VR 78
+		std::uint8_t  pad99;          // 99 VR 79
+		std::uint16_t pad9A;          // 9A VR 7A
+		std::uint32_t pad9C;          // 9C VA 7C
 	};
+#ifndef SKYRIMVR
 	static_assert(sizeof(BSDismemberSkinInstance) == 0xA0);
+#else
+	static_assert(sizeof(BSDismemberSkinInstance) == 0x80);
+#endif
 }

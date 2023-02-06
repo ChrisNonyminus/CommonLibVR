@@ -1,47 +1,5 @@
 #include "SKSE/Impl/WinAPI.h"
 
-#define WIN32_LEAN_AND_MEAN
-
-#define NOGDICAPMASKS
-#define NOVIRTUALKEYCODES
-//#define NOWINMESSAGES
-#define NOWINSTYLES
-#define NOSYSMETRICS
-#define NOMENUS
-#define NOICONS
-#define NOKEYSTATES
-#define NOSYSCOMMANDS
-#define NORASTEROPS
-#define NOSHOWWINDOW
-#define OEMRESOURCE
-#define NOATOM
-#define NOCLIPBOARD
-#define NOCOLOR
-//#define NOCTLMGR
-#define NODRAWTEXT
-#define NOGDI
-#define NOKERNEL
-//#define NOUSER
-#define NONLS
-//#define NOMB
-#define NOMEMMGR
-#define NOMETAFILE
-#define NOMINMAX
-//#define NOMSG
-#define NOOPENFILE
-#define NOSCROLL
-#define NOSERVICE
-#define NOSOUND
-#define NOTEXTMETRIC
-#define NOWH
-#define NOWINOFFSETS
-#define NOCOMM
-#define NOKANJI
-#define NOHELP
-#define NOPROFILER
-#define NODEFERWINDOWPOS
-#define NOMCX
-
 #include <Windows.h>
 
 #undef GetEnvironmentVariable
@@ -199,6 +157,12 @@ namespace SKSE::WinAPI
 				static_cast<::LPCSTR>(a_procName)));
 	}
 
+	bool IsDebuggerPresent() noexcept
+	{
+		return static_cast<bool>(
+			::IsDebuggerPresent());
+	}
+
 	std::int32_t MessageBox(
 		void*        a_wnd,
 		const char*  a_text,
@@ -225,6 +189,23 @@ namespace SKSE::WinAPI
 				static_cast<::LPCWSTR>(a_text),
 				static_cast<::LPCWSTR>(a_caption),
 				static_cast<::UINT>(a_type)));
+	}
+
+	int MultiByteToWideChar(
+		unsigned int  a_codePage,
+		std::uint32_t a_flags,
+		const char*   a_multiByteStr,
+		int           a_multiByte,
+		wchar_t*      a_wideCharStr,
+		int           a_wideChar)
+	{
+		return ::MultiByteToWideChar(
+			static_cast<::UINT>(a_codePage),
+			static_cast<::DWORD>(a_flags),
+			static_cast<::LPCCH>(a_multiByteStr),
+			a_multiByte,
+			static_cast<::LPWSTR>(a_wideCharStr),
+			a_wideChar);
 	}
 
 	void OutputDebugString(
@@ -319,5 +300,26 @@ namespace SKSE::WinAPI
 				static_cast<::SIZE_T>(a_size),
 				static_cast<::DWORD>(a_newProtect),
 				reinterpret_cast<::PDWORD>(a_oldProtect)));
+	}
+
+	int WideCharToMultiByte(
+		unsigned int   a_codePage,
+		std::uint32_t  a_flags,
+		const wchar_t* a_wideCharStr,
+		int            a_wideChar,
+		char*          a_multiByteStr,
+		int            a_multiByte,
+		const char*    a_defaultChar,
+		int*           a_usedDefaultChar)
+	{
+		return ::WideCharToMultiByte(
+			static_cast<::UINT>(a_codePage),
+			static_cast<::DWORD>(a_flags),
+			static_cast<::LPCWCH>(a_wideCharStr),
+			a_wideChar,
+			static_cast<::LPSTR>(a_multiByteStr),
+			a_multiByte,
+			static_cast<::LPCCH>(a_defaultChar),
+			static_cast<::LPBOOL>(a_usedDefaultChar));
 	}
 }

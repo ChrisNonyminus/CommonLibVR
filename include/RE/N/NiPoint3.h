@@ -24,10 +24,13 @@ namespace RE
 		NiPoint3     operator-() const;
 		NiPoint3&    operator+=(const NiPoint3& a_rhs);
 		NiPoint3&    operator-=(const NiPoint3& a_rhs);
+		NiPoint3&    operator*=(const NiPoint3& a_rhs);
+		NiPoint3&    operator/=(const NiPoint3& a_rhs);
 		NiPoint3&    operator*=(float a_scalar);
 		NiPoint3&    operator/=(float a_scalar);
 
 		[[nodiscard]] NiPoint3 Cross(const NiPoint3& pt) const;
+		[[nodiscard]] float    Dot(const NiPoint3& pt) const;
 		[[nodiscard]] float    GetDistance(const NiPoint3& a_pt) const noexcept;
 		[[nodiscard]] float    GetSquaredDistance(const NiPoint3& a_pt) const noexcept;
 		[[nodiscard]] float    Length() const;

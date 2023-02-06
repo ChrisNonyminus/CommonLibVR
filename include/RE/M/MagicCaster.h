@@ -2,10 +2,16 @@
 
 #include "RE/B/BSPointerHandle.h"
 #include "RE/B/BSSoundHandle.h"
+#include "RE/M/MagicSystem.h"
 
 namespace RE
 {
+	class Actor;
+	class BGSSaveGameBuffer;
+	class BGSLoadGameBuffer;
 	class MagicItem;
+	class NiNode;
+	class TESObjectREFR;
 
 	class MagicCaster
 	{
@@ -19,34 +25,34 @@ namespace RE
 		virtual ~MagicCaster();  // 00
 
 		// add
-		virtual void Unk_01(void);  // 01
-		virtual void Unk_02(void);  // 02
-		virtual void Unk_03(void);  // 03
-		virtual void Unk_04(void);  // 04
-		virtual void Unk_05(void);  // 05
-		virtual void Unk_06(void);  // 06
-		virtual void Unk_07(void);  // 07 - { return; }
-		virtual void Unk_08(void);  // 08 - { return; }
-		virtual void Unk_09(void);  // 09 - { return; }
-		virtual void Unk_0A(void);  // 0A
-		virtual void Unk_0B(void);  // 0B - { return 0; }
-		virtual void Unk_0C(void);  // 0C - { return 0; }
-		virtual void Unk_0D(void);  // 0D
-		virtual void Unk_0E(void);  // 0E - { return 0; }
-		virtual void Unk_0F(void);  // 0F - { return; }
-		virtual void Unk_10(void);  // 10 - { return; }
-		virtual void Unk_11(void);  // 11 - { return; }
-		virtual void Unk_12(void);  // 12 - { return; }
-		virtual void Unk_13(void);  // 13 - { return; }
-		virtual void Unk_14(void);  // 14
-		virtual void Unk_15(void);  // 15 - { return 0; }
-		virtual void Unk_16(void);  // 16 - { return 0; }
-		virtual void Unk_17(void);  // 17 - { return; }
-		virtual void Unk_18(void);  // 18
-		virtual void Unk_19(void);  // 19
-		virtual void Unk_1A(void);  // 1A
-		virtual void Unk_1B(void);  // 1B
-		virtual void Unk_1C(void);  // 1C
+		virtual void                       CastSpellImmediate(MagicItem* a_spell, bool a_noHitEffectArt, TESObjectREFR* a_target, float a_effectiveness, bool a_hostileEffectivenessOnly, float a_magnitudeOverride, Actor* a_blameActor);  // 01
+		virtual void                       FindTouchTarget();                                                                                                                                                                               // 02
+		virtual void                       RequestCastImpl();                                                                                                                                                                               // 03
+		virtual bool                       StartChargeImpl();                                                                                                                                                                               // 04
+		virtual void                       StartReadyImpl();                                                                                                                                                                                // 05
+		virtual void                       StartCastImpl();                                                                                                                                                                                 // 06
+		virtual void                       FinishCastImpl();                                                                                                                                                                                // 07 - { return; }
+		virtual void                       InterruptCastImpl(bool a_depleteEnergy);                                                                                                                                                         // 08 - { return; }
+		virtual void                       SpellCast(bool a_doCast, std::uint32_t a_arg2, MagicItem* a_spell);                                                                                                                              // 09 - { return; }
+		virtual bool                       CheckCast(MagicItem* a_spell, bool a_dualCast, float* a_alchStrength, MagicSystem::CannotCastReason* a_reason, bool a_useBaseValueForCost);                                                      // 0A
+		virtual TESObjectREFR*             GetCasterStatsObject() const;                                                                                                                                                                    // 0B - { return 0; }
+		virtual Actor*                     GetCasterAsActor() const;                                                                                                                                                                        // 0C - { return 0; }
+		virtual TESObjectREFR*             GetCasterObjectReference(Actor** a_outCaster) const;                                                                                                                                             // 0D
+		virtual NiNode*                    GetMagicNode();                                                                                                                                                                                  // 0E - { return 0; }
+		virtual void                       ClearMagicNode();                                                                                                                                                                                // 0F - { return; }
+		virtual void                       SetCurrentSpellImpl(MagicItem* a_spell);                                                                                                                                                         // 10 - { return; }
+		virtual void                       SelectSpellImpl();                                                                                                                                                                               // 11 - { return; }
+		virtual void                       DeselectSpellImpl();                                                                                                                                                                             // 12 - { return; }
+		virtual void                       SetSkipCheckCast();                                                                                                                                                                              // 13 - { return; }
+		virtual void                       SetCastingTimerForCharge();                                                                                                                                                                      // 14
+		virtual MagicSystem::CastingSource GetCastingSource() const;                                                                                                                                                                        // 15 - { return 0; }
+		virtual bool                       GetIsDualCasting() const;                                                                                                                                                                        // 16 - { return 0; }
+		virtual void                       SetDualCasting(bool a_set);                                                                                                                                                                      // 17 - { return; }
+		virtual void                       SaveGame(BGSSaveGameBuffer* a_buf);                                                                                                                                                              // 18
+		virtual void                       LoadGame(BGSLoadGameBuffer* a_buf);                                                                                                                                                              // 19
+		virtual void                       FinishLoadGame(BGSLoadGameBuffer* a_buf);                                                                                                                                                        // 1A
+		virtual void                       PrepareSound(MagicSystem::SoundID a_sound, MagicItem* a_spell);                                                                                                                                  // 1B
+		virtual void                       AdjustActiveEffect(ActiveEffect* a_activeEffect, float a_power, bool a_arg3);                                                                                                                    // 1C
 
 		// members
 		BSTArray<BSSoundHandle>                sounds;             // 08

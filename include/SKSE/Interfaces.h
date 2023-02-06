@@ -349,4 +349,78 @@ namespace SKSE
 		const char*   name;
 		std::uint32_t version;
 	};
+#ifdef SKYRIM_SUPPORT_AE
+	struct PluginVersionData
+	{
+	public:
+		enum
+		{
+			kVersion = 1,
+		};
+
+		enum
+		{
+			kVersionIndependent_AddressLibraryPostAE = 1 << 0,
+			kVersionIndependent_Signatures = 1 << 1,
+			kVersionIndependent_StructsPost629 = 1 << 2,
+		};
+
+		enum
+		{
+			kVersionIndependentEx_NoStructUse = 1 << 0,
+		};
+
+		constexpr void AuthorEmail(std::string_view a_email) noexcept { SetCharBuffer(a_email, std::span{ supportEmail }); }
+		constexpr void AuthorName(std::string_view a_name) noexcept { SetCharBuffer(a_name, std::span{ author }); }
+
+		constexpr void CompatibleVersions(std::initializer_list<REL::Version> a_versions) noexcept
+		{
+			assert(a_versions.size() < std::size(compatibleVersions) - 1);
+			std::transform(
+				a_versions.begin(),
+				a_versions.end(),
+				std::begin(compatibleVersions),
+				[](const REL::Version& a_version) noexcept { return a_version.pack(); });
+		}
+
+		constexpr void MinimumRequiredXSEVersion(REL::Version a_version) noexcept { xseMinimum = a_version.pack(); }
+		constexpr void PluginName(std::string_view a_plugin) noexcept { SetCharBuffer(a_plugin, std::span{ pluginName }); }
+		constexpr void PluginVersion(REL::Version a_version) noexcept { pluginVersion = a_version.pack(); }
+		constexpr void UsesAddressLibrary() noexcept { versionIndependence |= kVersionIndependent_AddressLibraryPostAE; }
+		constexpr void UsesSigScanning() noexcept { versionIndependence |= kVersionIndependent_Signatures; }
+		constexpr void UsesUpdatedStructs() noexcept { versionIndependence |= kVersionIndependent_StructsPost629; }
+
+		constexpr void UsesNoStructs() noexcept { versionIndependenceEx |= kVersionIndependentEx_NoStructUse; }
+
+		const std::uint32_t dataVersion{ kVersion };
+		std::uint32_t       pluginVersion = 0;
+		char                pluginName[256] = {};
+		char                author[256] = {};
+		char                supportEmail[252] = {};
+		std::uint32_t       versionIndependenceEx = 0;
+		std::uint32_t       versionIndependence = 0;
+		std::uint32_t       compatibleVersions[16] = {};
+		std::uint32_t       xseMinimum = 0;
+
+	private:
+		static constexpr void SetCharBuffer(
+			std::string_view a_src,
+			std::span<char>  a_dst) noexcept
+		{
+			assert(a_src.size() < a_dst.size());
+			std::fill(a_dst.begin(), a_dst.end(), '\0');
+			std::copy(a_src.begin(), a_src.end(), a_dst.begin());
+		}
+	};
+	static_assert(offsetof(PluginVersionData, dataVersion) == 0x000);
+	static_assert(offsetof(PluginVersionData, pluginVersion) == 0x004);
+	static_assert(offsetof(PluginVersionData, pluginName) == 0x008);
+	static_assert(offsetof(PluginVersionData, author) == 0x108);
+	static_assert(offsetof(PluginVersionData, supportEmail) == 0x208);
+	static_assert(offsetof(PluginVersionData, versionIndependenceEx) == 0x304);
+	static_assert(offsetof(PluginVersionData, versionIndependence) == 0x308);
+	static_assert(offsetof(PluginVersionData, compatibleVersions) == 0x30C);
+	static_assert(offsetof(PluginVersionData, xseMinimum) == 0x34C);
+	static_assert(sizeof(PluginVersionData) == 0x350);
+#endif
 }

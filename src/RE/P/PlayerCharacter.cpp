@@ -24,10 +24,19 @@ namespace RE
 		return func(this);
 	}
 
+#ifdef SKYRIM_SUPPORT_AE
+	void PlayerCharacter::AddPlayerAddItemEvent(TESObject* a_object, TESForm* a_owner, TESObjectREFR* a_container, AQUIRE_TYPE a_type)
+	{
+		using func_t = decltype(&PlayerCharacter::AddPlayerAddItemEvent);
+		REL::Relocation<func_t> func{ REL::ID(40456) };
+		return func(this, a_object, a_owner, a_container, a_type);
+	}
+#endif
+
 	bool PlayerCharacter::AttemptPickpocket(TESObjectREFR* a_containerRef, InventoryEntryData* a_entry, std::int32_t a_number, bool a_fromContainer)
 	{
 		using func_t = decltype(&PlayerCharacter::AttemptPickpocket);
-		REL::Relocation<func_t> func{ REL::ID(39568) };
+		REL::Relocation<func_t> func{ RELOCATION_ID(39568, 40654) };
 		return func(this, a_containerRef, a_entry, a_number, a_fromContainer);
 	}
 
@@ -65,8 +74,15 @@ namespace RE
 #ifndef SKYRIMVR
 		return grabbedObject.get();
 #else
-		return nullptr;    // Not sure this exists anymore in VR. will need to hunt
+		return nullptr;  // Not sure this exists anymore in VR. will need to hunt
 #endif
+	}
+
+	std::int32_t PlayerCharacter::GetItemCount(TESBoundObject* a_object)
+	{
+		using func_t = decltype(&PlayerCharacter::GetItemCount);
+		REL::Relocation<func_t> func{ RELOCATION_ID(19275, 19701) };
+		return func(this, a_object);
 	}
 
 	std::uint32_t PlayerCharacter::GetNumTints(std::uint32_t a_tintType)
@@ -127,6 +143,20 @@ namespace RE
 		return func(this, a_item, a_containerOwner, a_containerRef, a_eventType);
 	}
 
+	void PlayerCharacter::SetAIDriven(bool a_enable)
+	{
+		using func_t = decltype(&PlayerCharacter::SetAIDriven);
+		REL::Relocation<func_t> func{ RELOCATION_ID(39507, 40586) };
+		return func(this, a_enable);
+	}
+
+	void PlayerCharacter::SetEscaping(bool a_flag, bool a_escaped)
+	{
+		using func_t = decltype(&PlayerCharacter::SetEscaping);
+		REL::Relocation<func_t> func{ RELOCATION_ID(39574, 40660) };
+		return func(this, a_flag, a_escaped);
+	}
+
 	void PlayerCharacter::StartGrabObject()
 	{
 		using func_t = decltype(&PlayerCharacter::StartGrabObject);
@@ -134,17 +164,24 @@ namespace RE
 		return func(this);
 	}
 
+	void PlayerCharacter::UpdateCrosshairs()
+	{
+		using func_t = decltype(&PlayerCharacter::UpdateCrosshairs);
+		REL::Relocation<func_t> func(RELOCATION_ID(39535, 40621));
+		return func(this);
+	}
+
 	bool PlayerCharacter::CenterOnCell_Impl(const char* a_cellName, RE::TESObjectCELL* a_cell)
 	{
 		using func_t = decltype(&PlayerCharacter::CenterOnCell_Impl);
-		REL::Relocation<func_t> func{ REL::ID(39365) };
+		REL::Relocation<func_t> func{ RELOCATION_ID(39365, 40437) };
 		return func(this, a_cellName, a_cell);
 	}
 
 	void PlayerCharacter::AddSkillExperience(ActorValue a_skill, float a_experience)
 	{
 		using func_t = decltype(&PlayerCharacter::AddSkillExperience);
-		REL::Relocation<func_t> func(REL::ID(39413));
+		REL::Relocation<func_t> func(RELOCATION_ID(39413, 40488));
 		return func(this, a_skill, a_experience);
 	}
 }

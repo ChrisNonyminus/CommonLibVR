@@ -2,6 +2,7 @@
 
 #include "RE/B/BGSSoundDescriptorForm.h"
 #include "RE/B/BSSoundHandle.h"
+#include "RE/F/FormTraits.h"
 #include "RE/T/TESForm.h"
 
 namespace RE
@@ -13,7 +14,7 @@ namespace RE
 		return func();
 	}
 
-	bool BSAudioManager::Play(RE::FormID a_soundFormID)
+	bool BSAudioManager::Play(FormID a_soundFormID)
 	{
 		auto descriptor = TESForm::LookupByID<BGSSoundDescriptorForm>(a_soundFormID);
 		return descriptor && Play(descriptor);
@@ -30,5 +31,12 @@ namespace RE
 		using func_t = decltype(&BSAudioManager::BuildSoundDataFromDescriptor);
 		REL::Relocation<func_t> func{ Offset::BSAudioManager::BuildSoundDataFromDescriptor };
 		return func(this, a_soundHandle, a_descriptor, a_flags);
+	}
+
+	void BSAudioManager::BuildSoundDataFromEditorID(BSSoundHandle& a_soundHandle, const char* a_editorID, std::uint32_t a_flags)
+	{
+		using func_t = decltype(&BSAudioManager::BuildSoundDataFromEditorID);
+		REL::Relocation<func_t> func{ RELOCATION_ID(66403, 67665) };
+		return func(this, a_soundHandle, a_editorID, a_flags);
 	}
 }

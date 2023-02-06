@@ -4,6 +4,7 @@
 #include "RE/B/BSIntrusiveRefCounted.h"
 #include "RE/B/BSString.h"
 #include "RE/B/BSTList.h"
+#include "RE/E/EmotionTypes.h"
 #include "RE/M/MemoryManager.h"
 
 namespace RE
@@ -20,18 +21,6 @@ namespace RE
 	class DialogueResponse
 	{
 	public:
-		enum class EmotionType
-		{
-			kNeutral = 0,
-			kAnger = 1,
-			kDisgust = 2,
-			kFear = 3,
-			kSad = 4,
-			kHappy = 5,
-			kSurprise = 6,
-			kPuzzled = 7
-		};
-
 		// members
 		BSString                                     text;              // 00
 		stl::enumeration<EmotionType, std::uint32_t> animFaceArchType;  // 10
@@ -74,7 +63,7 @@ namespace RE
 		DialogueItem* Ctor(TESQuest* a_quest, TESTopic* a_topic, TESTopicInfo* a_topicInfo, Actor* a_speaker)
 		{
 			using func_t = decltype(&DialogueItem::Ctor);
-			REL::Relocation<func_t> func{ REL::ID(34413) };
+			REL::Relocation<func_t> func{ RELOCATION_ID(34413, 35220) };
 			return func(this, a_quest, a_topic, a_topicInfo, a_speaker);
 		}
 	};

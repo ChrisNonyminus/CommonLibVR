@@ -4,6 +4,7 @@
 #include "RE/B/BSTList.h"
 #include "RE/F/FORM.h"
 #include "RE/F/FormTypes.h"
+#include "RE/N/NiFile.h"
 
 namespace RE
 {
@@ -45,17 +46,29 @@ namespace RE
 			kSmallFile = 1 << 9
 		};
 
+		bool                                  CloseTES(bool a_force);
 		TESFile*                              Duplicate(std::uint32_t a_cacheSize = 0x4000);
+		[[nodiscard]] std::uint32_t           GetCombinedIndex() const noexcept { return static_cast<std::uint32_t>(compileIndex + smallFileCompileIndex); }
+		[[nodiscard]] std::uint8_t            GetCompileIndex() const noexcept { return compileIndex; }
 		std::uint32_t                         GetCurrentSubRecordType();
 		[[nodiscard]] constexpr std::uint32_t GetCurrentSubRecordSize() const noexcept { return actualChunkSize; }
 		[[nodiscard]] constexpr std::uint32_t GetCurrentChunkID() const noexcept { return currentchunkID; }
+		[[nodiscard]] std::string_view        GetFilename() const noexcept { return { fileName }; }
 		FormType                              GetFormType();
+		[[nodiscard]] std::uint16_t           GetSmallFileCompileIndex() const noexcept { return smallFileCompileIndex; }
 		[[nodiscard]] constexpr std::uint32_t GetPartialIndex() const noexcept { return !IsLight() ? compileIndex : (0xFE000 | smallFileCompileIndex); };
+		[[nodiscard]] bool                    IsFormInMod(FormID a_formID) const;
 		[[nodiscard]] constexpr bool          IsLight() const noexcept { return recordFlags.all(RecordFlag::kSmallFile); };
 		[[nodiscard]] constexpr bool          IsLocalized() const noexcept { return recordFlags.all(RecordFlag::kDelocalized); }
-		void                                  ReadData(void* a_buf, std::uint32_t a_size);
+		bool                                  OpenTES(NiFile::OpenMode a_accessMode, bool a_lock);
+		bool                                  ReadData(void* a_buf, std::uint32_t a_size);
 		bool                                  Seek(std::uint32_t a_offset);
+		bool                                  SeekNextForm(bool a_skipIgnored);
 		bool                                  SeekNextSubrecord();
+		std::uint32_t                         GetFormID(FormID formLower) const
+		{
+			return std::uint32_t(compileIndex) << 24 | (formLower & 0xFFFFFF);
+		}
 
 		// members
 		stl::enumeration<Error, std::uint32_t>      lastError;                        // 000

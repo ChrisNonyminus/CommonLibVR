@@ -1,6 +1,7 @@
 #include "RE/T/TESForm.h"
 
 #include "RE/B/BGSDefaultObjectManager.h"
+#include "RE/B/BGSKeywordForm.h"
 #include "RE/F/FormTraits.h"
 #include "RE/I/IObjectHandlePolicy.h"
 #include "RE/I/InventoryEntryData.h"
@@ -37,9 +38,13 @@ namespace RE
 	float TESForm::GetWeight() const
 	{
 		const auto survival = []() {
+#ifndef SKYRIMVR
 			const auto dobj = BGSDefaultObjectManager::GetSingleton();
 			const auto survival = dobj ? dobj->GetObject<TESGlobal>(DEFAULT_OBJECT::kSurvivalModeEnabled) : nullptr;
 			return survival ? survival->value == 1.0F : false;
+#else
+			return false;
+#endif
 		};
 
 		const auto ref = As<TESObjectREFR>();
@@ -55,6 +60,50 @@ namespace RE
 		} else {
 			return -1.0F;
 		}
+	}
+
+	bool TESForm::HasKeywordInArray(const std::vector<BGSKeyword*>& a_keywords, bool a_matchAll) const
+	{
+		const auto keywordForm = As<BGSKeywordForm>();
+		if (!keywordForm) {
+			return false;
+		}
+
+		bool hasKeyword = false;
+
+		for (const auto& keyword : a_keywords) {
+			hasKeyword = keyword && keywordForm->HasKeyword(keyword);
+			if (a_matchAll && !hasKeyword || hasKeyword) {
+				break;
+			}
+		}
+
+		return hasKeyword;
+	}
+
+	bool TESForm::HasKeywordInList(BGSListForm* a_keywordList, bool a_matchAll) const
+	{
+		if (!a_keywordList) {
+			return false;
+		}
+
+		const auto keywordForm = As<BGSKeywordForm>();
+		if (!keywordForm) {
+			return false;
+		}
+
+		bool hasKeyword = false;
+
+		a_keywordList->ForEachForm([&](const TESForm& a_form) {
+			const auto keyword = a_form.As<BGSKeyword>();
+			hasKeyword = keyword && keywordForm->HasKeyword(keyword);
+			if (a_matchAll && !hasKeyword || hasKeyword) {
+				return BSContainer::ForEachResult::kStop;
+			}
+			return BSContainer::ForEachResult::kContinue;
+		});
+
+		return hasKeyword;
 	}
 
 	bool TESForm::HasVMAD() const
@@ -76,5 +125,29 @@ namespace RE
 	bool TESForm::HasWorldModel() const noexcept
 	{
 		return As<TESModel>() != nullptr;
+	}
+
+	bool TESForm::IsInventoryObject() const
+	{
+		switch (GetFormType()) {
+		case FormType::Scroll:
+		case FormType::Armor:
+		case FormType::Book:
+		case FormType::Ingredient:
+		case FormType::Light:
+		case FormType::Misc:
+		case FormType::Apparatus:
+		case FormType::Weapon:
+		case FormType::Ammo:
+		case FormType::KeyMaster:
+		case FormType::AlchemyItem:
+		case FormType::Note:
+		case FormType::ConstructibleObject:
+		case FormType::SoulGem:
+		case FormType::LeveledItem:
+			return true;
+		default:
+			return false;
+		}
 	}
 }

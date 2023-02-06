@@ -1,11 +1,27 @@
 #include "RE/A/AIProcess.h"
 
+#include "RE/F/FormTraits.h"
 #include "RE/H/HighProcessData.h"
 #include "RE/M/MiddleHighProcessData.h"
+#include "RE/N/NiAVObject.h"
 #include "SKSE/API.h"
 
 namespace RE
 {
+	void AIProcess::ClearActionHeadtrackTarget(bool a_defaultHold)
+	{
+		if (high) {
+			high->ClearHeadtrackTarget(HighProcessData::HEAD_TRACK_TYPE::kAction, a_defaultHold);
+		}
+	}
+
+	void AIProcess::ClearMuzzleFlashes()
+	{
+		using func_t = decltype(&AIProcess::ClearMuzzleFlashes);
+		REL::Relocation<func_t> func{ RELOCATION_ID(38495, 39504) };
+		return func(this);
+	}
+
 	float AIProcess::GetCachedHeight() const
 	{
 		return high ? high->cachedActorHeight : static_cast<float>(-1.0);
@@ -31,6 +47,13 @@ namespace RE
 		return equippedObjects[Hands::kRight];
 	}
 
+	ObjectRefHandle AIProcess::GetHeadtrackTarget() const
+	{
+		using func_t = decltype(&AIProcess::GetHeadtrackTarget);
+		REL::Relocation<func_t> func{ RELOCATION_ID(38483, 39484) };
+		return func(this);
+	}
+
 	bool AIProcess::GetIsSummonedCreature() const noexcept
 	{
 		return middleHigh && middleHigh->summonedCreature;
@@ -43,6 +66,31 @@ namespace RE
 		} else {
 			return {};
 		}
+	}
+
+	TESPackage* AIProcess::GetRunningPackage() const
+	{
+		TESPackage* package = nullptr;
+		if (middleHigh) {
+			package = middleHigh->runOncePackage.package;
+		}
+		if (!package) {
+			package = currentPackage.package;
+		}
+		return package;
+	}
+
+	Actor* AIProcess::GetUserData() const
+	{
+		const auto torsoNode = middleHigh ? middleHigh->torsoNode : nullptr;
+		const auto userData = torsoNode ? torsoNode->GetUserData() : nullptr;
+
+		return userData ? userData->As<Actor>() : nullptr;
+	}
+
+	float AIProcess::GetVoiceRecoveryTime() const
+	{
+		return high ? high->voiceRecoveryTime : 0.0f;
 	}
 
 	bool AIProcess::InHighProcess() const
@@ -100,6 +148,28 @@ namespace RE
 	{
 		return cachedValues && cachedValues->flags.all(CachedValues::Flags::kActorIsGhost);
 	}
+#ifdef SKYRIMVR
+	void AIProcess::SetActorRefraction(float a_refraction)
+	{
+		using func_t = decltype(&AIProcess::SetActorRefraction);
+		REL::Relocation<func_t> func{ REL::ID(5375528368) };
+		return func(this, a_refraction);
+	}
+#endif
+
+	void AIProcess::KnockExplosion(Actor* a_actor, const NiPoint3& a_location, float a_magnitude)
+	{
+		using func_t = decltype(&AIProcess::KnockExplosion);
+		REL::Relocation<func_t> func{ RELOCATION_ID(38858, 39895) };
+		return func(this, a_actor, a_location, a_magnitude);
+	}
+
+	void AIProcess::SetActorsDetectionEvent(Actor* a_actor, const NiPoint3& a_location, std::int32_t a_soundLevel, TESObjectREFR* a_ref)
+	{
+		using func_t = decltype(&AIProcess::SetActorsDetectionEvent);
+		REL::Relocation<func_t> func{ RELOCATION_ID(38311, 39286) };
+		return func(this, a_actor, a_location, a_soundLevel, a_ref);
+	}
 
 	void AIProcess::SetArrested(bool a_arrested)
 	{
@@ -112,6 +182,20 @@ namespace RE
 	{
 		if (high) {
 			high->cachedActorHeight = a_height;
+		}
+	}
+
+	void AIProcess::SetHeadtrackTarget(Actor* a_owner, NiPoint3& a_targetPosition)
+	{
+		using func_t = decltype(&AIProcess::SetHeadtrackTarget);
+		REL::Relocation<func_t> func{ RELOCATION_ID(38850, 39887) };
+		return func(this, a_owner, a_targetPosition);
+	}
+
+	void AIProcess::SetRefraction(float a_refraction)
+	{
+		if (middleHigh) {
+			middleHigh->scriptRefractPower = a_refraction;
 		}
 	}
 

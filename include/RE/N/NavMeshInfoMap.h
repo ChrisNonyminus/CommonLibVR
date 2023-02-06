@@ -19,6 +19,7 @@ namespace RE
 	{
 	public:
 		inline static constexpr auto RTTI = RTTI_NavMeshInfoMap;
+		inline static constexpr auto VTABLE = VTABLE_NavMeshInfoMap;
 		inline static constexpr auto FORMTYPE = FormType::Navigation;
 
 		struct RecordFlags
@@ -56,5 +57,7 @@ namespace RE
 		std::uint16_t                                        padEA;             // EA
 		std::uint32_t                                        padEC;             // EC
 	};
+#ifndef SKYRIMVR
 	static_assert(sizeof(NavMeshInfoMap) == 0xF0);
+#endif
 }

@@ -65,7 +65,11 @@ namespace RE
 
 		[[nodiscard]] const BSFixedString& GetTypeString() const;
 		[[nodiscard]] VMTypeID             GetVMTypeID() const;
+		[[nodiscard]] bool                 IsEssential() const;
+		[[nodiscard]] bool                 IsProtected() const;
 		[[nodiscard]] bool                 IsQuestObject() const;
+		void                               SetEssential(bool a_set);
+		void                               SetProtected(bool a_set);
 
 		// members
 		BSFixedString                              aliasName;    // 08 - ALID

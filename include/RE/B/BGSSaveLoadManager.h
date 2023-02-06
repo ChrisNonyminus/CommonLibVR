@@ -4,6 +4,7 @@
 #include "RE/B/BSFixedString.h"
 #include "RE/B/BSTArray.h"
 #include "RE/B/BSTEvent.h"
+#include "RE/B/BSTHashMap.h"
 #include "RE/B/BSTMessageQueue.h"
 #include "RE/B/BSTSmartPointer.h"
 #include "RE/B/BSThread.h"
@@ -85,30 +86,27 @@ namespace RE
 
 		void Save(const char* a_fileName);
 		void Load(const char* a_fileName);
+		void Load(const char* a_fileName, bool a_checkForMods);
+		bool PopulateSaveList();
+
+		bool LoadMostRecentSaveGame();
 
 		// members
-		std::uint64_t   unk070;  // 070
-		std::uint32_t   unk078;  // 078
-		std::uint32_t   unk07C;  // 07C
-		std::uint32_t   unk080;  // 080
-		std::uint32_t   unk084;  // 084
-		std::uint64_t   unk088;  // 088
-		std::uint64_t   unk090;  // 090
-		std::uint64_t   unk098;  // 098
-		std::uint64_t   unk0A0;  // 0A0
-		std::uint32_t   unk0A8;  // 0A8
-		std::uint32_t   unk0AC;  // 0AC
-		std::uint32_t   unk0B0;  // 0B0
-		std::uint32_t   unk0B4;  // 0B4
-		std::uint64_t   unk0B8;  // 0B8
-		std::uint64_t   unk0C0;  // 0C0
-		std::uint64_t   unk0C8;  // 0C8
-		std::uint64_t   unk0D0;  // 0D0
-		std::uint32_t   unk0D8;  // 0D8
-		std::uint32_t   unk0DC;  // 0DC
-		std::uint32_t   unk0E0;  // 0E0
-		std::uint32_t   unk0E4;  // 0E4
-		BSTArray<void*> unk0E8;  // 0E8
+		BSTHashMap<std::uint64_t, BSFixedString> playerIDNameMap;  // 078
+		std::uint64_t                            unk0A0;           // 0A0
+		std::uint32_t                            unk0A8;           // 0A8
+		std::uint32_t                            unk0AC;           // 0AC
+		std::uint32_t                            unk0B0;           // 0B0
+		std::uint32_t                            unk0B4;           // 0B4
+		std::uint64_t                            unk0B8;           // 0B8
+		std::uint64_t                            unk0C0;           // 0C0
+		std::uint64_t                            unk0C8;           // 0C8
+		std::uint64_t                            currentPlayerID;  // 0D0
+		std::uint32_t                            unk0D8;           // 0D8
+		std::uint32_t                            unk0DC;           // 0DC
+		std::uint32_t                            unk0E0;           // 0E0
+		std::uint32_t                            unk0E4;           // 0E4
+		BSTArray<void*>                          unk0E8;           // 0E8
 
 		BSTArray<BGSSaveLoadFileEntry*> saveGameList;  // 100
 		std::uint8_t                    unk118;        // 118
@@ -182,9 +180,15 @@ namespace RE
 
 		BSTCommonStaticMessageQueue<BSTSmartPointer<bgs::saveload::Request>, 8> unk370;  // 370
 
+		uint64_t unk3D0;  // 3D0;
+
 	protected:
 		bool Save_Impl(std::int32_t a_deviceID, std::uint32_t a_outputStats, const char* a_fileName);
 		bool Load_Impl(const char* a_fileName, std::int32_t a_deviceID, std::uint32_t a_outputStats, bool a_checkForMods);
 	};
-	static_assert(sizeof(BGSSaveLoadManager) == 0x3D0);
+#ifndef SKYRIMVR
+	//static_assert(sizeof(BGSSaveLoadManager) == 0x3D0);
+#else
+	static_assert(sizeof(BGSSaveLoadManager) == 0x3D8);
+#endif
 }

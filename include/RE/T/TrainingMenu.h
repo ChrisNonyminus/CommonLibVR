@@ -31,7 +31,7 @@ namespace RE
 		BSEventNotifyControl ProcessEvent(const MenuOpenCloseEvent* a_event, BSTEventSource<MenuOpenCloseEvent>* a_eventSource) override;  // 01
 
 		// members
-		void*         unk38;            // 38 - smart ptr
+		Actor*        trainer;          // 38 - smart ptr
 		ActorValue    skill;            // 40
 		std::uint32_t unk44;            // 44
 		GFxValue      trainingMenuObj;  // 48 - MovieClip
@@ -42,5 +42,9 @@ namespace RE
 		GFxValue      trainCost;        // C0 - TextField
 		GFxValue      currentGold;      // D8 - TextField
 	};
+#ifndef SKYRIMVR
 	static_assert(sizeof(TrainingMenu) == 0xF0);
+#else
+	static_assert(sizeof(TrainingMenu) == 0x100);
+#endif
 }

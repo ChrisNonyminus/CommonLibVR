@@ -47,7 +47,11 @@ namespace RE
 			// members
 			BSTArray<UserEventMapping> deviceMappings[INPUT_DEVICES::kTotal];  // 00
 		};
+#ifndef SKYRIMVR
 		static_assert(sizeof(InputContext) == 0x60);
+#else
+		static_assert(sizeof(InputContext) == 0xA8);
+#endif
 
 		struct LinkedMapping
 		{
@@ -93,5 +97,7 @@ namespace RE
 		std::uint8_t                                     pad123;                              // 123
 		stl::enumeration<PC_GAMEPAD_TYPE, std::uint32_t> gamePadMapType;                      // 124
 	};
+#ifndef SKYRIMVR
 	static_assert(sizeof(ControlMap) == 0x128);
+#endif
 }

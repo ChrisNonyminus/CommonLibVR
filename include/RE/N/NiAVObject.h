@@ -1,6 +1,9 @@
 #pragma once
 
 #include "RE/B/BSFixedString.h"
+#include "RE/B/BSLightingShaderProperty.h"
+#include "RE/B/BSShaderMaterial.h"
+#include "RE/C/CollisionLayers.h"
 #include "RE/N/NiBound.h"
 #include "RE/N/NiObjectNET.h"
 #include "RE/N/NiSmartPointer.h"
@@ -8,6 +11,7 @@
 
 namespace RE
 {
+	class bhkCollisionObject;
 	class NiAlphaProperty;
 	class NiAVObject;
 	class NiCollisionObject;
@@ -17,13 +21,16 @@ namespace RE
 	class NiNode;
 	class NiPoint3;
 	class TESObjectREFR;
+	class BSGeometry;
 
 	class NiUpdateData
 	{
 	public:
 		enum class Flag
 		{
+			kNone = 0,
 			kDirty = 1 << 0,
+			kDisableCollision = 8193
 		};
 
 		float                                 time;   // 0
@@ -90,7 +97,10 @@ namespace RE
 		void          ProcessClone(NiCloningProcess& a_cloning) override;  // 1D
 
 		// add
-		virtual void        UpdateControllers(NiUpdateData& a_data);                                                            // 25
+		virtual void UpdateControllers(NiUpdateData& a_data);  // 25
+#ifdef SKYRIMVR
+		virtual void Unk_VRFunc(void);
+#endif
 		virtual void        PerformOp(PerformOpFunc& a_func);                                                                   // 26
 		virtual void        AttachProperty(NiAlphaProperty* a_property);                                                        // 27 - { return; }
 		virtual void        SetMaterialNeedsUpdate(bool a_needsUpdate);                                                         // 28 - { return; }
@@ -107,14 +117,31 @@ namespace RE
 		virtual void        PostAttachUpdate();                                                                                 // 33
 		virtual void        OnVisible(NiCullingProcess& a_process);                                                             // 34 - { return; }
 
-		[[nodiscard]] bool GetAppCulled() const;
-		bool               SetMotionType(std::uint32_t a_motionType, bool a_arg2 = true, bool a_arg3 = false, bool a_allowActivate = true);
-		void               TintScenegraph(const NiColorA& a_color);
-		void               Update(NiUpdateData& a_data);
-		void               UpdateBodyTint(const NiColor& a_color);
-		void               UpdateHairColor(const NiColor& a_color);
+		void                              CullNode(bool a_cull);
+		[[nodiscard]] bool                GetAppCulled() const;
+		[[nodiscard]] bhkCollisionObject* GetCollisionObject() const;
+		[[nodiscard]] COL_LAYER           GetCollisionLayer() const;
+		[[nodiscard]] BSGeometry*         GetFirstGeometryOfShaderType(BSShaderMaterial::Feature a_type);
+		[[nodiscard]] TESObjectREFR*      GetUserData() const;
+		[[nodiscard]] bool                HasAnimation() const;
+		[[nodiscard]] bool                HasShaderType(BSShaderMaterial::Feature a_type);
+		void                              RemoveDecals();
+		void                              SetAppCulled(bool a_cull);
+		void                              SetCollisionLayer(COL_LAYER a_collisionLayer);
+		void                              SetCollisionLayerAndGroup(COL_LAYER a_collisionLayer, std::uint32_t a_group);
+		bool                              SetMotionType(std::uint32_t a_motionType, bool a_arg2 = true, bool a_arg3 = false, bool a_allowActivate = true);
+		bool                              SetProjectedUVData(const NiColorA& a_projectedUVParams, const NiColor& a_projectedUVColor, bool a_isSnow);
+		void                              TintScenegraph(const NiColorA& a_color);
+		void                              Update(NiUpdateData& a_data);
+		void                              UpdateBodyTint(const NiColor& a_color);
+		void                              UpdateHairColor(const NiColor& a_color);
+		void                              UpdateMaterialAlpha(float a_alpha, bool a_doOnlySkin);
+		void                              UpdateRigidConstraints(bool a_enable, std::uint8_t a_arg2 = 1, std::uint32_t a_arg3 = 1);
+
+		BSLightingShaderProperty* temp_nicast(BSGeometry* a_geometry);
 
 		// members
+#ifndef SKYRIMVR
 		NiNode*                               parent;                   // 030
 		std::uint32_t                         parentIndex;              // 038
 		std::uint32_t                         unk03C;                   // 03C
@@ -127,12 +154,35 @@ namespace RE
 		TESObjectREFR*                        userData;                 // 0F8
 		float                                 fadeAmount;               // 100
 		std::uint32_t                         lastUpdatedFrameCounter;  // 104
-#ifndef SKYRIMVR
-		std::uint64_t                         unk108;                   // 108
-#else
-		std::uint32_t                         unk108;                   // 108
-		stl::enumeration<Flag, std::uint32_t> flagsVR;                  // 10C
-#endif
+		std::uint8_t                          unk108;                   // 108
+		std::uint8_t                          flags02;                  // 109
+		std::uint16_t                         unk10A;                   // 10A
+		std::uint32_t                         pad10C;                   // 10C
 	};
 	static_assert(sizeof(NiAVObject) == 0x110);
+#else
+		NiNode*                               parent;                   // 030
+		std::uint32_t                         parentIndex;              // 038
+		std::uint32_t                         unk03C;                   // 03C
+		NiPointer<NiCollisionObject>          collisionObject;          // 040
+		NiTransform                           local;                    // 048
+		NiTransform                           world;                    // 07C
+		NiTransform                           previousWorld;            // 0B0
+		NiBound                               worldBound;               // 0E4
+		float                                 unkF4;                    // 0F4
+		float                                 unkF8;                    // 0F8
+		float                                 unkFC;                    // 0FC
+		float                                 fadeAmount;               // 100
+		std::uint32_t                         lastUpdatedFrameCounter;  // 104
+		float                                 unk108;                   // 108
+		stl::enumeration<Flag, std::uint32_t> flags;                    // 10C
+		TESObjectREFR*                        userData;                 // 110
+		std::uint32_t                         unk11C;                   // 11C
+		std::uint8_t                          unk120[8];                // 120 - bitfield
+		std::uint64_t                         unk128;                   // 128
+		std::uint32_t                         unk130;                   // 130
+		std::uint32_t                         unk134;                   // 134
+	};
+	static_assert(sizeof(NiAVObject) == 0x138);
+#endif
 }

@@ -2,6 +2,7 @@
 
 namespace SKSE::WinAPI
 {
+	inline constexpr auto CP_UTF8{ static_cast<unsigned int>(65001) };
 	inline constexpr auto IMAGE_SCN_MEM_EXECUTE{ static_cast<std::uint32_t>(0x20000000) };
 	inline constexpr auto IMAGE_SCN_MEM_WRITE{ static_cast<std::uint32_t>(0x80000000) };
 	inline const auto     INVALID_HANDLE_VALUE{ reinterpret_cast<void*>(static_cast<std::intptr_t>(-1)) };
@@ -112,6 +113,8 @@ namespace SKSE::WinAPI
 		void*       a_module,
 		const char* a_procName) noexcept;
 
+	[[nodiscard]] bool IsDebuggerPresent() noexcept;
+
 	std::int32_t MessageBox(
 		void*        a_wnd,
 		const char*  a_text,
@@ -123,6 +126,14 @@ namespace SKSE::WinAPI
 		const wchar_t* a_text,
 		const wchar_t* a_caption,
 		unsigned int   a_type) noexcept;
+
+	[[nodiscard]] int MultiByteToWideChar(
+		unsigned int  a_codePage,
+		std::uint32_t a_flags,
+		const char*   a_multiByteStr,
+		int           a_multiByte,
+		wchar_t*      a_wideCharStr,
+		int           a_wideChar);
 
 	void OutputDebugString(
 		const char* a_outputString) noexcept;
@@ -162,6 +173,16 @@ namespace SKSE::WinAPI
 		std::size_t    a_size,
 		std::uint32_t  a_newProtect,
 		std::uint32_t* a_oldProtect) noexcept;
+
+	[[nodiscard]] int WideCharToMultiByte(
+		unsigned int   a_codePage,
+		std::uint32_t  a_flags,
+		const wchar_t* a_wideCharStr,
+		int            a_wideChar,
+		char*          a_multiByteStr,
+		int            a_multiByte,
+		const char*    a_defaultChar,
+		int*           a_usedDefaultChar);
 }
 
 namespace RE::DirectX

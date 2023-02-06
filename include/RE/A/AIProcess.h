@@ -10,6 +10,7 @@ namespace RE
 	class Actor;
 	class bhkCharacterController;
 	class HighProcess;
+	class NiPoint3;
 	class TESForm;
 	struct HighProcessData;
 	struct MiddleHighProcessData;
@@ -109,7 +110,12 @@ namespace RE
 		enum class LowProcessFlags : std::uint8_t
 		{
 			kNone = 0,
+			kTargetActivated = 1 << 0,
+			kCurrentActionComplete = 1 << 1,
 			kAlert = 1 << 3,
+			kFollower = 1 << 4,
+			kPackageDoneOnce = 1 << 5,
+			kPackageIdleDone = 1 << 6
 		};
 
 		struct Hands
@@ -138,21 +144,32 @@ namespace RE
 		};
 		static_assert(sizeof(Data0B8) == 0x38);
 
+		void                    ClearActionHeadtrackTarget(bool a_defaultHold);
+		void                    ClearMuzzleFlashes();
 		float                   GetCachedHeight() const;
 		bhkCharacterController* GetCharController();
 		ActorHandle             GetCommandingActor() const;
 		TESForm*                GetEquippedLeftHand();
 		TESForm*                GetEquippedRightHand();
+		ObjectRefHandle         GetHeadtrackTarget() const;
 		[[nodiscard]] bool      GetIsSummonedCreature() const noexcept;
 		ObjectRefHandle         GetOccupiedFurniture() const;
+		TESPackage*             GetRunningPackage() const;
+		Actor*                  GetUserData() const;
+		float                   GetVoiceRecoveryTime() const;
 		bool                    InHighProcess() const;
 		bool                    InMiddleHighProcess() const;
 		bool                    InMiddleLowProcess() const;
 		bool                    InLowProcess() const;
 		bool                    IsArrested() const;
 		bool                    IsGhost() const;
+		void                    SetActorRefraction(float a_refraction);
+		void                    KnockExplosion(Actor* a_actor, const NiPoint3& a_location, float a_magnitude);
+		void                    SetActorsDetectionEvent(Actor* a_actor, const NiPoint3& a_location, std::int32_t a_soundLevel, TESObjectREFR* a_ref);
 		void                    SetArrested(bool a_arrested);
 		void                    SetCachedHeight(float a_height);
+		void                    SetRefraction(float a_refraction);
+		void                    SetHeadtrackTarget(Actor* a_owner, NiPoint3& a_targetPosition);
 		void                    Set3DUpdateFlag(RESET_3D_FLAGS a_flags);
 		void                    Update3DModel(Actor* a_actor);
 
@@ -179,7 +196,7 @@ namespace RE
 		TESForm*                                        equippedObjects[Hand::kTotal];  // 0F0
 		std::uint64_t                                   unk100;                         // 100
 		std::uint64_t                                   unk108;                         // 108
-		std::uint32_t                                   unk110;                         // 110
+		RefHandle                                       followTarget;                   // 110
 		RefHandle                                       target;                         // 114
 		std::uint64_t                                   unk118;                         // 118
 		std::uint64_t                                   unk120;                         // 120

@@ -2,6 +2,7 @@
 
 #include "RE/B/BSAtomic.h"
 #include "RE/B/BSBitField.h"
+#include "RE/B/BSContainer.h"
 #include "RE/B/BSMultiBoundNode.h"
 #include "RE/B/BSPointerHandle.h"
 #include "RE/B/BSTArray.h"
@@ -19,7 +20,16 @@
 
 namespace RE
 {
+	class TESRegionList;
+
+	namespace BGSWaterCollisionManager
+	{
+		class BGSWaterUpdateI;
+	}
+
+	class BSTempEffectParticle;
 	class bhkWorld;
+	class BSPortalGraph;
 	class NavMesh;
 	class NiNode;
 
@@ -69,30 +79,33 @@ namespace RE
 	{
 	public:
 		// members
-		void*                                                unk000;                // 000 - smart ptr
-		NiPointer<NiNode>                                    cell3D;                // 008
-		void*                                                unk010;                // 010 - smart ptr
-		void*                                                unk018;                // 018 - smart ptr
-		void*                                                unk020;                // 020 - smart ptr
-		std::uint64_t                                        unk028;                // 028
-		std::uint64_t                                        unk030;                // 030
-		std::uint64_t                                        unk038;                // 038
-		BSTArray<void*>                                      unk040;                // 040
-		BSTArray<void*>                                      unk058;                // 058
-		NiTMap<TESForm*, ObjectRefHandle>                    unk070;                // 070
-		NiTMap<ObjectRefHandle, NiNode*>                     emittanceLightRefMap;  // 090
-		NiTMap<ObjectRefHandle, NiPointer<BSMultiBoundNode>> multiboundRefMap;      // 0B0
-		NiTMap<BSMultiBoundNode*, ObjectRefHandle>           refMultiboundMap;      // 0D0
-		BSSimpleList<ObjectRefHandle>                        activatingRefs;        // 0F0
-		BSSimpleList<ObjectRefHandle>                        unk100;                // 100
-		std::uint64_t                                        unk110;                // 110
-		BSTArray<void*>                                      unk118;                // 118
-		BSTArray<void*>                                      unk130;                // 130
-		BSTArray<void*>                                      unk148;                // 148
-		BGSEncounterZone*                                    encounterZone;         // 160
-		std::uint64_t                                        unk168;                // 168
-		std::uint64_t                                        unk170;                // 170
-		std::uint64_t                                        unk178;                // 178
+		NiPointer<BSPortalGraph>                             portalGraph;             // 000 - smart ptr
+		NiPointer<NiNode>                                    cell3D;                  // 008
+		void*                                                unk010;                  // 010 - smart ptr
+		void*                                                unk018;                  // 018 - smart ptr
+		void*                                                unk020;                  // 020 - smart ptr
+		std::uint64_t                                        unk028;                  // 028
+		std::uint64_t                                        unk030;                  // 030
+		std::uint64_t                                        unk038;                  // 038
+		BSTArray<void*>                                      unk040;                  // 040
+		BSTArray<void*>                                      unk058;                  // 058
+		NiTMap<TESForm*, ObjectRefHandle>                    unk070;                  // 070
+		NiTMap<ObjectRefHandle, NiNode*>                     emittanceLightRefMap;    // 090
+		NiTMap<ObjectRefHandle, NiPointer<BSMultiBoundNode>> multiboundRefMap;        // 0B0
+		NiTMap<BSMultiBoundNode*, ObjectRefHandle>           refMultiboundMap;        // 0D0
+		BSSimpleList<ObjectRefHandle>                        activatingRefs;          // 0F0
+		BSSimpleList<ObjectRefHandle>                        unk100;                  // 100
+		std::uint64_t                                        unk110;                  // 110
+		BSTArray<void*>                                      unk118;                  // 118
+		BSTArray<void*>                                      unk130;                  // 130
+		BSTArray<void*>                                      unk148;                  // 148
+		BGSEncounterZone*                                    encounterZone;           // 160
+		std::uint32_t                                        unk168;                  // 168
+		volatile mutable std::int32_t                        criticalQueuedRefCount;  // 16C
+		volatile mutable std::int32_t                        queuedRefCount;          // 170
+		volatile mutable std::int32_t                        queuedDistantRefCount;   // 174
+		std::uint32_t                                        unk178;                  // 178
+		std::uint32_t                                        unk17C;                  // 17C
 	};
 	static_assert(sizeof(LOADED_CELL_DATA) == 0x180);
 
@@ -102,6 +115,7 @@ namespace RE
 	{
 	public:
 		inline static constexpr auto RTTI = RTTI_TESObjectCELL;
+		inline static constexpr auto VTABLE = VTABLE_TESObjectCELL;
 		inline static constexpr auto FORMTYPE = FormType::Cell;
 
 		enum class Flag  // DATA
@@ -115,7 +129,8 @@ namespace RE
 			kPublicArea = 1 << 5,
 			kHandChanged = 1 << 6,
 			kShowSky = 1 << 7,
-			kUseSkyLighting = 1 << 8
+			kUseSkyLighting = 1 << 8,
+			kWarnToLeave = 1 << 9
 		};
 
 		enum class CellState
@@ -177,22 +192,19 @@ namespace RE
 		bool        IsParentForm() override;                                                              // 34 - { return true; }
 		bool        IsFormTypeChild(FormType a_type) override;                                            // 36
 
-		TESNPC* GetActorOwner();
-
-		inline bhkWorld* GetbhkWorld() const
-		{
-			using func_t = decltype(&TESObjectCELL::GetbhkWorld);
-			REL::Relocation<func_t> func{ REL::ID(18536) };
-			return func(this);
-		}
-
-		void           ForEachReference(std::function<bool(TESObjectREFR&)> a_callback) const;
-		void           ForEachReferenceInRange(const NiPoint3& a_origin, float a_radius, std::function<bool(TESObjectREFR&)> a_callback) const;
+		TESNPC*        GetActorOwner();
+		bhkWorld*      GetbhkWorld() const;
+		void           ForEachReference(std::function<BSContainer::ForEachResult(TESObjectREFR&)> a_callback) const;
+		void           ForEachReferenceInRange(const NiPoint3& a_origin, float a_radius, std::function<BSContainer::ForEachResult(TESObjectREFR&)> a_callback) const;
 		EXTERIOR_DATA* GetCoordinates();
 		TESFaction*    GetFactionOwner();
 		INTERIOR_DATA* GetLighting();
+		BGSLocation*   GetLocation() const;
 		float          GetNorthRotation();
 		TESForm*       GetOwner();
+		float          GetExteriorWaterHeight() const;
+		TESRegionList* GetRegionList(bool a_createIfMissing);
+		bool           GetWaterHeight(const NiPoint3& a_pos, float& a_waterHeight);
 		bool           IsAttached() const;
 		bool           IsExteriorCell() const;
 		bool           IsInteriorCell() const;
@@ -207,30 +219,34 @@ namespace RE
 		bool           UsesSkyLighting() const;
 
 		// members
-		mutable BSSpinLock                        grassCreateLock;   // 030
-		mutable BSSpinLock                        grassTaskLock;     // 038
-		stl::enumeration<Flag, std::uint16_t>     cellFlags;         // 040
-		std::uint16_t                             cellGameFlags;     // 042
-		stl::enumeration<CellState, std::uint8_t> cellState;         // 044
-		bool                                      autoWaterLoaded;   // 045
-		bool                                      cellDetached;      // 046
-		std::uint8_t                              pad047;            // 047
-		ExtraDataList                             extraList;         // 048
-		CellData                                  cellData;          // 060 - XCLL if interior, XCLC if exterior
-		TESObjectLAND*                            cellLand;          // 068
-		float                                     waterHeight;       // 070 - XCLW
-		NavMeshArray*                             navMeshes;         // 078
-		BSTSet<NiPointer<TESObjectREFR>>          references;        // 080
-		TESForm*                                  unk0B0;            // 0B0 - REFR owner of cell?
-		BSTArray<TESObjectREFR*>                  objectList;        // 0B8 - persistent
-		BSTArray<void*>                           unk0D0;            // 0D0
-		BSTArray<void*>                           unk0E8;            // 0E8
-		BSTArray<void*>                           unk100;            // 100
-		mutable BSSpinLock                        spinLock;          // 118
-		TESWorldSpace*                            worldSpace;        // 120
-		LOADED_CELL_DATA*                         loadedData;        // 128
-		BGSLightingTemplate*                      lightingTemplate;  // 130 - LTMP
-		std::uint64_t                             unk138;            // 138
+		mutable BSSpinLock                                   grassCreateLock;   // 030
+		mutable BSSpinLock                                   grassTaskLock;     // 038
+		stl::enumeration<Flag, std::uint16_t>                cellFlags;         // 040
+		std::uint16_t                                        cellGameFlags;     // 042
+		stl::enumeration<CellState, std::uint8_t>            cellState;         // 044
+		bool                                                 autoWaterLoaded;   // 045
+		bool                                                 cellDetached;      // 046
+		std::uint8_t                                         pad047;            // 047
+		ExtraDataList                                        extraList;         // 048
+		CellData                                             cellData;          // 060 - XCLL if interior, XCLC if exterior
+		TESObjectLAND*                                       cellLand;          // 068
+		float                                                waterHeight;       // 070 - XCLW
+		NavMeshArray*                                        navMeshes;         // 078
+		BSTSet<NiPointer<TESObjectREFR>>                     references;        // 080
+		TESForm*                                             unk0B0;            // 0B0 - REFR owner of cell?
+		BSTArray<TESObjectREFR*>                             objectList;        // 0B8 - persistent
+		BSTArray<void*>                                      unk0D0;            // 0D0
+		BSTArray<BGSWaterCollisionManager::BGSWaterUpdateI*> waterObjects;      // 0E8
+		BSTArray<void*>                                      unk100;            // 100
+		mutable BSSpinLock                                   spinLock;          // 118
+		TESWorldSpace*                                       worldSpace;        // 120
+		LOADED_CELL_DATA*                                    loadedData;        // 128
+		BGSLightingTemplate*                                 lightingTemplate;  // 130 - LTMP
+		std::uint64_t                                        unk138;            // 138
 	};
+#ifndef SKYRIM_SUPPORT_AE
 	static_assert(sizeof(TESObjectCELL) == 0x140);
+#else
+	static_assert(sizeof(TESObjectCELL) == 0x148);
+#endif
 }

@@ -17,7 +17,9 @@
 #include <cwchar>
 #include <cwctype>
 #include <exception>
+#include <execution>
 #include <filesystem>
+#include <format>
 #include <fstream>
 #include <functional>
 #include <iomanip>
@@ -32,6 +34,7 @@
 #include <new>
 #include <numeric>
 #include <optional>
+#include <random>
 #include <regex>
 #include <set>
 #include <source_location>
@@ -55,7 +58,9 @@ static_assert(
 	"wrap std::time_t instead");
 #include <fmt/format.h>
 #pragma warning(push)
+#include <binary_io/file_stream.hpp>
 #include <boost/stl_interfaces/iterator_interface.hpp>
+#include <fmt/format.h>
 #include <spdlog/spdlog.h>
 #pragma warning(pop)
 
@@ -93,6 +98,53 @@ namespace SKSE
 			class = std::enable_if_t<
 				std::is_pointer_v<T>>>
 		using not_null = T;
+
+		namespace nttp
+		{
+			template <class CharT, std::size_t N>
+			struct string
+			{
+				using char_type = CharT;
+				using pointer = char_type*;
+				using const_pointer = const char_type*;
+				using reference = char_type&;
+				using const_reference = const char_type&;
+				using size_type = std::size_t;
+
+				static constexpr auto npos = static_cast<std::size_t>(-1);
+
+				consteval string(const_pointer a_string) noexcept
+				{
+					for (size_type i = 0; i < N; ++i) {
+						c[i] = a_string[i];
+					}
+				}
+
+				[[nodiscard]] consteval const_reference operator[](size_type a_pos) const noexcept
+				{
+					assert(a_pos < N);
+					return c[a_pos];
+				}
+
+				[[nodiscard]] consteval const_reference back() const noexcept { return (*this)[size() - 1]; }
+				[[nodiscard]] consteval const_pointer   data() const noexcept { return c; }
+				[[nodiscard]] consteval bool            empty() const noexcept { return this->size() == 0; }
+				[[nodiscard]] consteval const_reference front() const noexcept { return (*this)[0]; }
+				[[nodiscard]] consteval size_type       length() const noexcept { return N; }
+				[[nodiscard]] consteval size_type       size() const noexcept { return length(); }
+
+				template <std::size_t POS = 0, std::size_t COUNT = npos>
+				[[nodiscard]] consteval auto substr() const noexcept
+				{
+					return string < CharT, COUNT != npos ? COUNT : N - POS > (this->data() + POS);
+				}
+
+				char_type c[N] = {};
+			};
+
+			template <class CharT, std::size_t N>
+			string(const CharT (&)[N]) -> string<CharT, N - 1>;
+		}
 
 		template <class EF>                                    //
 		requires(std::invocable<std::remove_reference_t<EF>>)  //
@@ -446,6 +498,12 @@ namespace SKSE
 		}
 
 		template <class T>
+		void emplace_vtable(T* a_ptr)
+		{
+			reinterpret_cast<std::uintptr_t*>(a_ptr)[0] = T::VTABLE[0].address();
+		}
+
+		template <class T>
 		void memzero(volatile T* a_ptr, std::size_t a_size = sizeof(T))
 		{
 			const auto     begin = reinterpret_cast<volatile char*>(a_ptr);
@@ -472,39 +530,84 @@ namespace SKSE
 			}
 		}
 
+		[[nodiscard]] inline auto utf8_to_utf16(std::string_view a_in) noexcept
+			-> std::optional<std::wstring>
+		{
+			const auto cvt = [&](wchar_t* a_dst, std::size_t a_length) {
+				return WinAPI::MultiByteToWideChar(
+					WinAPI::CP_UTF8,
+					0,
+					a_in.data(),
+					static_cast<int>(a_in.length()),
+					a_dst,
+					static_cast<int>(a_length));
+			};
+
+			const auto len = cvt(nullptr, 0);
+			if (len == 0) {
+				return std::nullopt;
+			}
+
+			std::wstring out(len, '\0');
+			if (cvt(out.data(), out.length()) == 0) {
+				return std::nullopt;
+			}
+
+			return out;
+		}
+
+		[[nodiscard]] inline auto utf16_to_utf8(std::wstring_view a_in) noexcept
+			-> std::optional<std::string>
+		{
+			const auto cvt = [&](char* a_dst, std::size_t a_length) {
+				return WinAPI::WideCharToMultiByte(
+					WinAPI::CP_UTF8,
+					0,
+					a_in.data(),
+					static_cast<int>(a_in.length()),
+					a_dst,
+					static_cast<int>(a_length),
+					nullptr,
+					nullptr);
+			};
+
+			const auto len = cvt(nullptr, 0);
+			if (len == 0) {
+				return std::nullopt;
+			}
+
+			std::string out(len, '\0');
+			if (cvt(out.data(), out.length()) == 0) {
+				return std::nullopt;
+			}
+
+			return out;
+		}
+
 		[[noreturn]] inline void report_and_fail(std::string_view a_msg, std::source_location a_loc = std::source_location::current())
 		{
 			const auto body = [&]() {
-				constexpr std::array directories{
-					"include/"sv,
-					"src/"sv,
-				};
-
 				const std::filesystem::path p = a_loc.file_name();
-				const auto                  filename = p.generic_string();
-				std::string_view            fileview = filename;
+				auto                        filename = p.lexically_normal().generic_string();
 
-				constexpr auto npos = std::string::npos;
-				std::size_t    pos = npos;
-				std::size_t    off = 0;
-				for (const auto& dir : directories) {
-					pos = fileview.find(dir);
-					if (pos != npos) {
-						off = dir.length();
-						break;
-					}
+				const std::regex r{ R"((?:^|[\\\/])(?:include|src)[\\\/](.*)$)" };
+				std::smatch      matches;
+				if (std::regex_search(filename, matches, r)) {
+					filename = matches[1].str();
 				}
 
-				if (pos != npos) {
-					fileview = fileview.substr(pos + off);
-				}
-
-				return fmt::format(FMT_STRING("{}({}): {}"), fileview, a_loc.line(), a_msg);
+				return utf8_to_utf16(
+					fmt::format(
+						"{}({}): {}"sv,
+						filename,
+						a_loc.line(),
+						a_msg))
+				    .value_or(L"<character encoding error>"s);
 			}();
 
-			const auto caption = []() -> std::string {
-				const auto        maxPath = WinAPI::GetMaxPath();
-				std::vector<char> buf;
+			const auto caption = []() {
+				const auto           maxPath = WinAPI::GetMaxPath();
+				std::vector<wchar_t> buf;
 				buf.reserve(maxPath);
 				buf.resize(maxPath / 2);
 				std::uint32_t result = 0;
@@ -518,9 +621,9 @@ namespace SKSE
 
 				if (result && result != buf.size()) {
 					std::filesystem::path p(buf.begin(), buf.begin() + result);
-					return p.filename().string();
+					return p.filename().native();
 				} else {
-					return {};
+					return L""s;
 				}
 			}();
 
@@ -543,7 +646,7 @@ namespace SKSE
 		}
 
 		template <class To, class From>
-		[[nodiscard]] To unrestricted_cast(From a_from)
+		[[nodiscard]] To unrestricted_cast(From a_from) noexcept
 		{
 			if constexpr (std::is_same_v<
 							  std::remove_cv_t<From>,
@@ -602,15 +705,25 @@ namespace REL
 	namespace WinAPI = SKSE::WinAPI;
 }
 
+#ifdef SKYRIM_SUPPORT_AE
+#	define RELOCATION_ID(SE, AE) REL::ID(AE)
+#else
+#	define RELOCATION_ID(SE, AE) REL::ID(SE)
+#endif
+
 #include "REL/Relocation.h"
 
 #ifndef SKYRIMVR
-#include "RE/Offsets.h"
+#	include "RE/Offsets.h"
+#	include "RE/Offsets_NiRTTI.h"
+#	include "RE/Offsets_RTTI.h"
+#	include "RE/C/CreationClubMenu.h"
 #else
-#include "RE/Offsets_VR.h"
+#	include "RE/Offsets_VR.h"
+#	include "RE/Offsets_VR_NiRTTI.h"
+#	include "RE/Offsets_VR_RTTI.h"
 #endif
-#include "RE/Offsets_NiRTTI.h"
-#include "RE/Offsets_RTTI.h"
 
 #include "RE/B/BSCoreTypes.h"
+#include "RE/Offsets_VTABLE.h"
 #include "RE/S/SFTypes.h"

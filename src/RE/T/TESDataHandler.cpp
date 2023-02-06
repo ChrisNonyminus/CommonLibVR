@@ -24,18 +24,36 @@ namespace RE
 		if (!file || file->compileIndex == 0xFF) {
 			return nullptr;
 		}
-
+#ifndef SKYRIMVR
 		FormID formID = file->compileIndex << (3 * 8);
 		formID += file->smallFileCompileIndex << ((1 * 8) + 4);
 		formID += a_rawFormID;
 
 		return TESForm::LookupByID(formID);
+#else
+		return TESForm::LookupByID(a_rawFormID & 0xFFFFFF | (file->compileIndex << 24));
+#endif
+	}
+
+	FormID TESDataHandler::LookupFormID(FormID a_rawFormID, std::string_view a_modName)
+	{
+		auto file = LookupModByName(a_modName);
+		if (!file || file->compileIndex == 0xFF) {
+			return 0;
+		}
+
+		FormID formID = file->compileIndex << (3 * 8);
+		formID += file->smallFileCompileIndex << ((1 * 8) + 4);
+		formID += a_rawFormID;
+
+		return formID;
 	}
 
 	const TESFile* TESDataHandler::LookupModByName(std::string_view a_modName)
 	{
 		for (auto& file : files) {
-			if (_stricmp(file->fileName, a_modName.data()) == 0) {
+			if (a_modName.size() == strlen(file->fileName) &&
+				_strnicmp(file->fileName, a_modName.data(), a_modName.size()) == 0) {
 				return file;
 			}
 		}
@@ -50,8 +68,15 @@ namespace RE
 
 	const TESFile* TESDataHandler::LookupLoadedModByName(std::string_view a_modName)
 	{
-		for (auto& file : compiledFileCollection.files) {
-			if (_stricmp(file->fileName, a_modName.data()) == 0) {
+		for (auto& file :
+#ifndef SKYRIMVR
+			compiledFileCollection.files
+#else
+			loadedMods
+#endif
+		) {
+			if (file && a_modName.size() == strlen(file->fileName) &&
+				_strnicmp(file->fileName, a_modName.data(), a_modName.size()) == 0) {
 				return file;
 			}
 		}
@@ -60,8 +85,14 @@ namespace RE
 
 	const TESFile* TESDataHandler::LookupLoadedModByIndex(std::uint8_t a_index)
 	{
-		for (auto& file : compiledFileCollection.files) {
-			if (file->compileIndex == a_index) {
+		for (auto& file :
+#ifndef SKYRIMVR
+			compiledFileCollection.files
+#else
+			loadedMods
+#endif
+		) {
+			if (file && file->compileIndex == a_index) {
 				return file;
 			}
 		}
@@ -74,24 +105,35 @@ namespace RE
 		return mod ? std::make_optional(mod->compileIndex) : std::nullopt;
 	}
 
-	const TESFile* TESDataHandler::LookupLoadedLightModByName(std::string_view a_modName)
+	const TESFile* TESDataHandler::LookupLoadedLightModByName(std::string_view
+			a_modName)
 	{
+#ifndef SKYRIMVR
 		for (auto& smallFile : compiledFileCollection.smallFiles) {
-			if (_stricmp(smallFile->fileName, a_modName.data()) == 0) {
+			if (a_modName.size() == strlen(smallFile->fileName) &&
+				_strnicmp(smallFile->fileName, a_modName.data(), a_modName.size()) == 0) {
 				return smallFile;
 			}
 		}
 		return nullptr;
+#else
+		return LookupLoadedModByName(a_modName);
+#endif
 	}
 
-	const TESFile* TESDataHandler::LookupLoadedLightModByIndex(std::uint16_t a_index)
+	const TESFile* TESDataHandler::LookupLoadedLightModByIndex(std::uint16_t
+			a_index)
 	{
+#ifndef SKYRIMVR
 		for (auto& smallFile : compiledFileCollection.smallFiles) {
 			if (smallFile->smallFileCompileIndex == a_index) {
 				return smallFile;
 			}
 		}
 		return nullptr;
+#else
+		return LookupLoadedModByIndex(a_index);
+#endif
 	}
 
 	std::optional<std::uint16_t> TESDataHandler::GetLoadedLightModIndex(std::string_view a_modName)
@@ -108,5 +150,12 @@ namespace RE
 	BSTArray<TESForm*>& TESDataHandler::GetFormArray(FormType a_formType)
 	{
 		return formArrays[stl::to_underlying(a_formType)];
+	}
+
+	ObjectRefHandle TESDataHandler::CreateReferenceAtLocation(TESBoundObject* a_base, const NiPoint3& a_location, const NiPoint3& a_rotation, TESObjectCELL* a_targetCell, TESWorldSpace* a_selfWorldSpace, TESObjectREFR* a_alreadyCreatedRef, BGSPrimitive* a_primitive, const ObjectRefHandle& a_linkedRoomRefHandle, bool a_forcePersist, bool a_arg11)
+	{
+		using func_t = decltype(&TESDataHandler::CreateReferenceAtLocation);
+		REL::Relocation<func_t> func{ RELOCATION_ID(13625, 13723) };
+		return func(this, a_base, a_location, a_rotation, a_targetCell, a_selfWorldSpace, a_alreadyCreatedRef, a_primitive, a_linkedRoomRefHandle, a_forcePersist, a_arg11);
 	}
 }

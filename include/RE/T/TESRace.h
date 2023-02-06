@@ -4,6 +4,7 @@
 #include "RE/B/BGSAttackDataForm.h"
 #include "RE/B/BGSBehaviorGraphModel.h"
 #include "RE/B/BGSBipedObjectForm.h"
+#include "RE/B/BGSHeadPart.h"
 #include "RE/B/BGSKeywordForm.h"
 #include "RE/B/BGSSkinForm.h"
 #include "RE/B/BGSTextureModel.h"
@@ -23,6 +24,8 @@
 namespace RE
 {
 	class AttackAnimationArrayMap;
+
+	using HeadPartType = BGSHeadPart::HeadPartType;
 
 	namespace BSResource
 	{
@@ -146,6 +149,7 @@ namespace RE
 	{
 	public:
 		inline static constexpr auto RTTI = RTTI_TESRace;
+		inline static constexpr auto VTABLE = VTABLE_TESRace;
 		inline static constexpr auto FORMTYPE = FormType::Race;
 
 		enum class EquipmentFlag
@@ -306,6 +310,8 @@ namespace RE
 
 		[[nodiscard]] bool AllowsPCDialogue() const;
 		[[nodiscard]] bool AllowsPickpocket() const;
+		BGSHeadPart*       GetHeadPartByType(HeadPartType a_type, SEX a_sex) const;
+		[[nodiscard]] bool IsChildRace() const;
 
 		// members
 		TESModel                                       skeletonModels[SEXES::kTotal];                  // 098 - ANAM

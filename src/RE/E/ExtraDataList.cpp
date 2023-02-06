@@ -11,6 +11,7 @@
 #include "RE/E/ExtraOwnership.h"
 #include "RE/E/ExtraReferenceHandle.h"
 #include "RE/E/ExtraSoul.h"
+#include "RE/E/ExtraTeleport.h"
 #include "RE/E/ExtraTextDisplayData.h"
 #include "RE/G/GameSettingCollection.h"
 #include "RE/T/TESBoundObject.h"
@@ -19,33 +20,51 @@
 
 namespace RE
 {
-	ExtraDataList::ExtraDataList() :
-		_data(nullptr),
-		_presence(nullptr),
-		_lock()
-	{}
-
-	ExtraDataList::~ExtraDataList()
+#ifndef SKYRIM_SUPPORT_AE
+	BaseExtraList::~BaseExtraList()
 	{
-		while (_data) {
-			auto xData = _data;
-			_data = xData->next;
+		while (data) {
+			auto xData = data;
+			data = xData->next;
 			delete xData;
 		}
-		_data = nullptr;
+		data = nullptr;
 
-		free(_presence);
-		_presence = nullptr;
+		free(presence);
+		presence = nullptr;
+	}
+#endif
+
+	bool BaseExtraList::PresenceBitfield::HasType(std::uint32_t a_type) const
+	{
+		const std::uint32_t index = (a_type >> 3);
+		if (index >= 0x18) {
+			return false;
+		}
+		const std::uint8_t bitMask = 1 << (a_type % 8);
+		return (bits[index] & bitMask) != 0;
+	}
+
+	void BaseExtraList::PresenceBitfield::MarkType(std::uint32_t a_type, bool a_cleared)
+	{
+		const std::uint32_t index = (a_type >> 3);
+		const std::uint8_t  bitMask = 1 << (a_type % 8);
+		auto&               flag = bits[index];
+		if (a_cleared) {
+			flag &= ~bitMask;
+		} else {
+			flag |= bitMask;
+		}
 	}
 
 	ExtraDataList::iterator ExtraDataList::begin()
 	{
-		return iterator(_data);
+		return iterator(_extraData.data);
 	}
 
 	ExtraDataList::const_iterator ExtraDataList::cbegin() const
 	{
-		return const_iterator(_data);
+		return const_iterator(_extraData.data);
 	}
 
 	ExtraDataList::const_iterator ExtraDataList::begin() const
@@ -71,7 +90,7 @@ namespace RE
 	bool ExtraDataList::HasType(ExtraDataType a_type) const
 	{
 		BSReadLockGuard locker(_lock);
-		return _presence != nullptr && _presence->HasType(static_cast<std::uint32_t>(a_type));
+		return _extraData.presence != nullptr && _extraData.presence->HasType(static_cast<std::uint32_t>(a_type));
 	}
 
 	BSExtraData* ExtraDataList::GetByType(ExtraDataType a_type)
@@ -94,11 +113,11 @@ namespace RE
 
 		bool removed = false;
 
-		if (_data == a_toRemove) {
-			_data = _data->next;
+		if (_extraData.data == a_toRemove) {
+			_extraData.data = _extraData.data->next;
 			removed = true;
 		} else {
-			for (auto iter = _data; iter; iter = iter->next) {
+			for (auto iter = _extraData.data; iter; iter = iter->next) {
 				if (iter->next == a_toRemove) {
 					iter->next = a_toRemove->next;
 					removed = true;
@@ -118,21 +137,21 @@ namespace RE
 	{
 		BSWriteLockGuard locker(_lock);
 
-		if (!_data) {
+		if (!_extraData.data) {
 			return false;
 		}
 
 		bool removed = false;
 
-		while (_data->GetType() == a_type) {
-			auto tmp = _data;
-			_data = _data->next;
+		while (_extraData.data->GetType() == a_type) {
+			auto tmp = _extraData.data;
+			_extraData.data = _extraData.data->next;
 			delete tmp;
 			removed = true;
 		}
 
-		auto prev = _data;
-		for (auto cur = _data->next; cur; cur = cur->next) {
+		auto prev = _extraData.data;
+		for (auto cur = _extraData.data->next; cur; cur = cur->next) {
 			if (cur->GetType() == a_type) {
 				prev->next = cur->next;
 				delete cur;
@@ -254,6 +273,34 @@ namespace RE
 		return xSoul ? *xSoul->soul : SOUL_LEVEL::kNone;
 	}
 
+	ObjectRefHandle ExtraDataList::GetTeleportLinkedDoor()
+	{
+		auto xTeleport = GetByType<ExtraTeleport>();
+
+		return xTeleport && xTeleport->teleportData ?
+                   xTeleport->teleportData->linkedDoor :
+                   ObjectRefHandle();
+	}
+
+	bool ExtraDataList::GetWorn() const
+	{
+		return HasType<ExtraWorn>() || HasType<ExtraWornLeft>();
+	}
+
+	void ExtraDataList::SetEncounterZone(BGSEncounterZone* a_zone)
+	{
+		if (auto xZone = GetByType<ExtraEncounterZone>()) {
+			if (a_zone) {
+				xZone->zone = a_zone;
+			} else {
+				Remove(xZone);
+			}
+		} else if (a_zone) {
+			xZone = new ExtraEncounterZone(a_zone);
+			Add(xZone);
+		}
+	}
+
 	void ExtraDataList::SetExtraFlags(ExtraFlags::Flag a_flags, bool a_enable)
 	{
 		using func_t = decltype(&ExtraDataList::SetExtraFlags);
@@ -261,11 +308,39 @@ namespace RE
 		return func(this, a_flags, a_enable);
 	}
 
+	void ExtraDataList::SetHeadingTargetRefHandle(ObjectRefHandle& a_handle)
+	{
+		using func_t = decltype(&ExtraDataList::SetHeadingTargetRefHandle);
+		REL::Relocation<func_t> func{ RELOCATION_ID(11530, 11676) };
+		return func(this, a_handle);
+	}
+
 	void ExtraDataList::SetInventoryChanges(InventoryChanges* a_changes)
 	{
 		using func_t = decltype(&ExtraDataList::SetInventoryChanges);
 		REL::Relocation<func_t> func{ Offset::ExtraDataList::SetInventoryChanges };
 		return func(this, a_changes);
+	}
+
+	void ExtraDataList::SetLevCreaModifier(LEV_CREA_MODIFIER a_modifier)
+	{
+		if (a_modifier == LEV_CREA_MODIFIER::kNone) {
+			RemoveByType(ExtraDataType::kLevCreaModifier);
+		} else {
+			if (auto xLevCreaModifier = GetByType<ExtraLevCreaModifier>()) {
+				xLevCreaModifier->modifier = a_modifier;
+			} else {
+				xLevCreaModifier = new ExtraLevCreaModifier(a_modifier);
+				Add(xLevCreaModifier);
+			}
+		}
+	}
+
+	void ExtraDataList::SetLinkedRef(TESObjectREFR* a_targetRef, BGSKeyword* a_keyword)
+	{
+		using func_t = decltype(&ExtraDataList::SetLinkedRef);
+		REL::Relocation<func_t> func{ RELOCATION_ID(11633, 11779) };
+		return func(this, a_targetRef, a_keyword);
 	}
 
 	void ExtraDataList::SetOwner(TESForm* a_owner)
@@ -287,38 +362,6 @@ namespace RE
 		}
 	}
 
-	bool ExtraDataList::PresenceBitfield::HasType(std::uint32_t a_type) const
-	{
-		const std::uint32_t index = (a_type >> 3);
-		if (index >= 0x18) {
-			return false;
-		}
-		const std::uint8_t bitMask = 1 << (a_type % 8);
-		return (bits[index] & bitMask) != 0;
-	}
-
-	void ExtraDataList::PresenceBitfield::MarkType(std::uint32_t a_type, bool a_cleared)
-	{
-		const std::uint32_t index = (a_type >> 3);
-		const std::uint8_t  bitMask = 1 << (a_type % 8);
-		auto&               flag = bits[index];
-		if (a_cleared) {
-			flag &= ~bitMask;
-		} else {
-			flag |= bitMask;
-		}
-	}
-
-	void ExtraDataList::MarkType(std::uint32_t a_type, bool a_cleared)
-	{
-		_presence->MarkType(a_type, a_cleared);
-	}
-
-	void ExtraDataList::MarkType(ExtraDataType a_type, bool a_cleared)
-	{
-		MarkType(static_cast<std::uint32_t>(a_type), a_cleared);
-	}
-
 	BSExtraData* ExtraDataList::GetByTypeImpl(ExtraDataType a_type) const
 	{
 		BSReadLockGuard locker(_lock);
@@ -327,12 +370,22 @@ namespace RE
 			return nullptr;
 		}
 
-		for (auto iter = _data; iter; iter = iter->next) {
+		for (auto iter = _extraData.data; iter; iter = iter->next) {
 			if (iter->GetType() == a_type) {
 				return iter;
 			}
 		}
 
 		return nullptr;
+	}
+
+	void ExtraDataList::MarkType(std::uint32_t a_type, bool a_cleared)
+	{
+		_extraData.presence->MarkType(a_type, a_cleared);
+	}
+
+	void ExtraDataList::MarkType(ExtraDataType a_type, bool a_cleared)
+	{
+		MarkType(static_cast<std::uint32_t>(a_type), a_cleared);
 	}
 }

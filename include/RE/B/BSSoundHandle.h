@@ -33,9 +33,12 @@ namespace RE
 		BSSoundHandle();
 		~BSSoundHandle() = default;
 
+		bool               FadeOutAndRelease(std::uint16_t a_fadeTimeMS);
 		[[nodiscard]] bool IsValid() const;
+		bool               SetFrequency(float a_frequency);
 		bool               SetPosition(NiPoint3 a_pos);
 		void               SetObjectToFollow(NiAVObject* a_node);
+		bool               SetVolume(float a_volume);
 		bool               Stop();
 		bool               Play();
 

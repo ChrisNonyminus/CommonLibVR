@@ -14,15 +14,6 @@ namespace RE
 		kStop = 1
 	};
 
-	struct BSContainer
-	{
-		enum class ForEachResult
-		{
-			kContinue = 0,
-			kStop = 1
-		};
-	};
-
 	template <class Event>
 	class BSTEventSource
 	{
@@ -62,6 +53,12 @@ namespace RE
 			if (it != pendingUnregisters.end()) {
 				pendingUnregisters.erase(it);
 			}
+		}
+
+		template <class SinkEvent>
+		inline void AddEventSink(BSTEventSink<SinkEvent>* a_sink)
+		{
+			AddEventSink(a_sink);
 		}
 
 		void RemoveEventSink(Sink* a_eventSink)

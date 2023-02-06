@@ -79,6 +79,7 @@ namespace RE
 	{
 	public:
 		inline static constexpr auto RTTI = RTTI_BGSProjectile;
+		inline static constexpr auto VTABLE = VTABLE_BGSProjectile;
 		inline static constexpr auto FORMTYPE = FormType::Projectile;
 
 		struct RecordFlags
@@ -101,6 +102,14 @@ namespace RE
 		NiAVObject* Clone3D(TESObjectREFR* a_ref, bool a_arg3) override;                                                                                                      // 40
 		void        UnClone3D(TESObjectREFR* a_ref) override;                                                                                                                 // 41
 		bool        GetActivateText(TESObjectREFR* a_activator, BSString& a_dst) override;                                                                                    // 4C
+
+		[[nodiscard]] constexpr bool IsMissile() const noexcept { return data.types.all(BGSProjectileData::Type::kMissile); }
+		[[nodiscard]] constexpr bool IsGrenade() const noexcept { return data.types.all(BGSProjectileData::Type::kGrenade); }
+		[[nodiscard]] constexpr bool IsBeam() const noexcept { return data.types.all(BGSProjectileData::Type::kBeam); }
+		[[nodiscard]] constexpr bool IsFlamethrower() const noexcept { return data.types.all(BGSProjectileData::Type::kFlamethrower); }
+		[[nodiscard]] constexpr bool IsCone() const noexcept { return data.types.all(BGSProjectileData::Type::kCone); }
+		[[nodiscard]] constexpr bool IsBarrier() const noexcept { return data.types.all(BGSProjectileData::Type::kBarrier); }
+		[[nodiscard]] constexpr bool IsArrow() const noexcept { return data.types.all(BGSProjectileData::Type::kArrow); }
 
 		// members
 		BGSProjectileData data;              // 080 - DATA

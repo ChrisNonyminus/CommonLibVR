@@ -70,6 +70,7 @@ namespace RE
 			inline BSFixedString& operator=(BSFixedString&& a_rhs)
 			{
 				if (this != std::addressof(a_rhs)) {
+					try_release();
 					_data = a_rhs._data;
 					a_rhs._data = nullptr;
 				}
@@ -160,6 +161,19 @@ namespace RE
 			[[nodiscard]] inline friend bool operator==(const_pointer a_lhs, const BSFixedString& a_rhs) { return a_rhs == a_lhs; }
 			[[nodiscard]] inline friend bool operator!=(const_pointer a_lhs, const BSFixedString& a_rhs) { return !(a_lhs == a_rhs); }
 
+			[[nodiscard]] inline bool contains(std::basic_string_view<value_type> a_rhs) const
+			{
+				if (a_rhs.length() > length()) {
+					return false;
+				}
+				for (size_type i = 0; i < length(); ++i) {
+					if (strncmp(&c_str()[i], a_rhs.data(), a_rhs.length()) == 0) {
+						return true;
+					}
+				}
+				return false;
+			}
+
 		private:
 			[[nodiscard]] static inline int strncmp(const char* a_lhs, const char* a_rhs, std::size_t a_length)
 			{
@@ -177,14 +191,14 @@ namespace RE
 			inline BSFixedString* ctor8(const char* a_data)
 			{
 				using func_t = decltype(&BSFixedString::ctor8);
-				REL::Relocation<func_t> func{ REL::ID(67819) };
+				REL::Relocation<func_t> func{ RELOCATION_ID(67819, 69161) };
 				return func(this, a_data);
 			}
 
 			inline BSFixedString* ctor16(const wchar_t* a_data)
 			{
 				using func_t = decltype(&BSFixedString::ctor16);
-				REL::Relocation<func_t> func{ REL::ID(67834) };
+				REL::Relocation<func_t> func{ RELOCATION_ID(67834, 69176) };
 				return func(this, a_data);
 			}
 

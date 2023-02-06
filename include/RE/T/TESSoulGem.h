@@ -10,6 +10,7 @@ namespace RE
 	{
 	public:
 		inline static constexpr auto RTTI = RTTI_TESSoulGem;
+		inline static constexpr auto VTABLE = VTABLE_TESSoulGem;
 		inline static constexpr auto FORMTYPE = FormType::SoulGem;
 
 		struct RecordFlags
@@ -32,6 +33,7 @@ namespace RE
 		// override (BGSKeywordForm)
 		[[nodiscard]] BGSKeyword* GetDefaultKeyword() const override;  // 05
 
+		[[nodiscard]] bool                 CanHoldNPCSoul() const noexcept { return (GetFormFlags() & RecordFlags::kCanHoldNPCSoul) != 0; }
 		[[nodiscard]] constexpr SOUL_LEVEL GetContainedSoul() const noexcept { return *currentSoul; }
 		[[nodiscard]] constexpr SOUL_LEVEL GetMaximumCapacity() const noexcept { return *soulCapacity; }
 
